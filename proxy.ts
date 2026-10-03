@@ -21,13 +21,14 @@ export async function proxy(req: NextRequest) {
         `${req.nextUrl.origin}/api/admin/system-settings`,
         {
           cache: "no-store",
-        }
+        },
       );
       const settingsData = await settingsRes.json();
       const isMaintenanceActive =
         settingsData?.settings?.maintenanceMode ?? false;
 
-      const userRole = token?.role || (token?.user as any)?.role;
+      // const userRole = token?.role || (token?.user as any)?.role;
+      const userRole = token?.role || (token?.user as { role?: string })?.role;
 
       // If maintenance is ON and the user is NOT superadmin, redirect to /maintenance
       if (isMaintenanceActive && userRole !== "superadmin") {
@@ -46,7 +47,7 @@ export async function proxy(req: NextRequest) {
   }
 
   // 3. Existing Logged-in user only routes
-  if (pathname.startsWith("/profile") || pathname.startsWith("/orders")) {
+  if (pathname.startsWith("/profile") || pathname.startsWith("/purchase")) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
@@ -66,5 +67,3 @@ export const config = {
   // Added matcher patterns to ensure maintenance mode catches home/public routes as well
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-
-

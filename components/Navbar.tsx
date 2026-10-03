@@ -37,7 +37,7 @@ export default function Navbar() {
           <MobileNav role={role} />
 
           <Link href="/" className="text-xl font-bold flex items-center">
-            <span className="text-teal-600 tracking-tighter">LuxuryStays</span>
+            <span className="text-teal-600 tracking-tighter">Real State</span>
           </Link>
         </div>
 
