@@ -4,7 +4,7 @@ export interface IBooking extends Document {
   user: mongoose.Types.ObjectId;
   room: mongoose.Types.ObjectId;
   hotel: mongoose.Types.ObjectId;
-  checkIn: Date;
+  checkIn: Date; 
   checkOut: Date;
   totalPrice: number;
   status: "pending" | "confirmed" | "checked_in" | "completed" | "cancelled";
