@@ -1,0 +1,77 @@
+/* @tailwind base;
+@tailwind components;
+@tailwind utilities; */
+@import "tailwindcss";
+
+body {
+  background-color: #f9fafb;
+  color: #1f2937;
+}
+
+/* ============ Auth pages (login / register) ============ */
+
+/* পুরো পেজের কালারফুল ব্যাকগ্রাউন্ড — primary theme color থেকে soft gradient */
+.auth-page-bg {
+  min-height: 100vh;
+  background: radial-gradient(circle at 15% 15%, #ccfbf1 0%, transparent 45%),
+    radial-gradient(circle at 85% 20%, #99f6e4 0%, transparent 40%),
+    radial-gradient(circle at 50% 100%, #5eead4 0%, transparent 35%),
+    #f9fafb;
+}
+
+/* সাদা কার্ড, উপরে হালকা teal glow shadow */
+.auth-card {
+  background: #ffffff;
+  border-radius: 1.5rem;
+  box-shadow: 0 20px 45px -15px rgba(15, 118, 110, 0.25), 0 0 0 1px rgba(20, 184, 166, 0.08);
+}
+
+/* উপরের আইকন সার্কেল — primary থেকে dark এ gradient */
+.auth-icon-circle {
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 60%, #1f2937 130%);
+  box-shadow: 0 10px 25px -8px rgba(15, 118, 110, 0.6);
+}
+
+/* ইনপুট ফিল্ড — hover/focus এ primary কালার হাইলাইট */
+.auth-input {
+  background: #f9fafb;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+.auth-input:focus-within {
+  border-color: #14b8a6;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.15);
+}
+
+/* মূল সাবমিট বাটন — primary gradient */
+.btn-primary {
+  background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%);
+  border-radius: 0.9rem;
+  box-shadow: 0 8px 20px -6px rgba(20, 184, 166, 0.55);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px -6px rgba(20, 184, 166, 0.65);
+}
+.btn-primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+/* Google / OAuth বাটন */
+.btn-oauth {
+  background: #ffffff;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 0.9rem;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+.btn-oauth:hover:not(:disabled) {
+  border-color: #14b8a6;
+  background: #f0fdfa;
+}
+
+
+
