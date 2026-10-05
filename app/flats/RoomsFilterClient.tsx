@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import RoomCard from "@/components/cards/RoomCard";
+import RoomCard from "@/components/cards/FlatCard";
 import { Filter, RotateCcw, Search, Sparkles } from "lucide-react";
 import { CITIES, ROOM_CATEGORIES, AMENITIES } from "@/lib/constants";
 

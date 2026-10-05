@@ -1,4 +1,5 @@
-// views/AdminSettingsView.tsx
+// app/admin/views/AdminSettingsView.tsx
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -27,9 +28,9 @@ export default function AdminSettingsView() {
       const data = await res.json();
       if (data.success && data.settings) {
         setForm({
-          email: data.settings.email || "support@luxurystays.com",
-          phone: data.settings.phone || "+1 (800) 123-4567",
-          address: data.settings.address || "123 Luxury Way, Suite 500, San Francisco, CA",
+          email: data.settings.email || "support@realestate.com",
+          phone: data.settings.phone || "+880 1234 567890",
+          address: data.settings.address || "Gulshan Avenue, Dhaka, Bangladesh",
           twitterUrl: data.settings.twitterUrl || "https://x.com",
           githubUrl: data.settings.githubUrl || "https://github.com",
           linkedinUrl: data.settings.linkedinUrl || "https://linkedin.com",
@@ -40,13 +41,44 @@ export default function AdminSettingsView() {
       console.error("Fetch Settings Error:", err);
       toast.error("Could not load settings from server");
     } finally {
-      // Guarantees loading state finishes even on errors
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSettings();
+    let isMounted = true;
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch("/api/admin/system-settings");
+        if (!res.ok) throw new Error("Failed to fetch API");
+
+        const data = await res.json();
+        if (isMounted && data.success && data.settings) {
+          setForm({
+            email: data.settings.email || "support@realestate.com",
+            phone: data.settings.phone || "+880 1234 567890",
+            address: data.settings.address || "Gulshan Avenue, Dhaka, Bangladesh",
+            twitterUrl: data.settings.twitterUrl || "https://x.com",
+            githubUrl: data.settings.githubUrl || "https://github.com",
+            linkedinUrl: data.settings.linkedinUrl || "https://linkedin.com",
+            instagramUrl: data.settings.instagramUrl || "https://instagram.com",
+          });
+        }
+      } catch (err) {
+        console.error("Fetch Settings Error:", err);
+        if (isMounted) toast.error("Could not load settings from server");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +121,7 @@ export default function AdminSettingsView() {
         <div>
           <h2 className="text-xl font-bold text-slate-800">System Settings</h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Manage global contact details and social media links used across the website.
+            Manage global contact details and social media links used across your real estate platform.
           </p>
         </div>
         <button
@@ -103,7 +135,6 @@ export default function AdminSettingsView() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Social Media Links Section */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
           <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
             <Share2 size={16} className="text-teal-600" /> Social Media URLs
@@ -111,91 +142,48 @@ export default function AdminSettingsView() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">X (Twitter) URL</label>
-              <input
-                type="text"
-                value={form.twitterUrl}
-                onChange={(e) => setForm({ ...form, twitterUrl: e.target.value })}
-                placeholder="https://x.com"
-                className={inputClass}
-              />
+              <input type="text" value={form.twitterUrl} onChange={(e) => setForm({ ...form, twitterUrl: e.target.value })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">GitHub URL</label>
-              <input
-                type="text"
-                value={form.githubUrl}
-                onChange={(e) => setForm({ ...form, githubUrl: e.target.value })}
-                placeholder="https://github.com"
-                className={inputClass}
-              />
+              <input type="text" value={form.githubUrl} onChange={(e) => setForm({ ...form, githubUrl: e.target.value })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">LinkedIn URL</label>
-              <input
-                type="text"
-                value={form.linkedinUrl}
-                onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })}
-                placeholder="https://linkedin.com"
-                className={inputClass}
-              />
+              <input type="text" value={form.linkedinUrl} onChange={(e) => setForm({ ...form, linkedinUrl: e.target.value })} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 mb-1">Instagram URL</label>
-              <input
-                type="text"
-                value={form.instagramUrl}
-                onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })}
-                placeholder="https://instagram.com"
-                className={inputClass}
-              />
+              <input type="text" value={form.instagramUrl} onChange={(e) => setForm({ ...form, instagramUrl: e.target.value })} className={inputClass} />
             </div>
           </div>
         </div>
 
-        {/* Contact Info Section */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-6 space-y-4">
           <h3 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-            <Mail size={16} className="text-teal-600" /> "Get In Touch" Contact Info
+            <Mail size={16} className="text-teal-600" /> Agency Contact Info
           </h3>
           <div className="space-y-4">
             <div>
-              <label className=" text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
-                <MapPin size={13} /> Physical Address
+              <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
+                <MapPin size={13} /> Office Address
               </label>
-              <input
-                type="text"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="123 Luxury Way, Suite 500, San Francisco, CA"
-                className={inputClass}
-              />
+              <input type="text" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} className={inputClass} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className=" text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
+                <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
                   <Phone size={13} /> Phone Number
                 </label>
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="+1 (800) 123-4567"
-                  className={inputClass}
-                />
+                <input type="text" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={inputClass} />
               </div>
 
               <div>
-                <label className=" text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
+                <label className="text-xs font-bold text-slate-500 mb-1 flex items-center gap-1">
                   <Mail size={13} /> Email Address
                 </label>
-                <input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="support@luxurystays.com"
-                  className={inputClass}
-                />
+                <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={inputClass} />
               </div>
             </div>
           </div>

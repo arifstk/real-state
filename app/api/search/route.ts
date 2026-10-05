@@ -2,8 +2,8 @@
 
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Room from "@/models/Room";
-import Hotel from "@/models/Hotel";
+import Room from "@/models/Flat";
+import Hotel from "@/models/Property";
 
 export async function GET(request: Request) {
   try {

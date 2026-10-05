@@ -1,8 +1,8 @@
 // app/page.tsx
 
 import HeroBanner from "@/components/sections/HeroBanner";
-import HotelsSection from "@/components/sections/HotelsSection";
-import RoomsSection from "@/components/sections/RoomsSection";
+import HotelsSection from "@/components/sections/PropertiesSection";
+import RoomsSection from "@/components/sections/FlatsSection";
 import { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import Script from "next/script";

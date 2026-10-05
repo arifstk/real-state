@@ -4,8 +4,8 @@ import Image from "next/image";
 import { ArrowRight, ShieldCheck, MapPin, Star } from "lucide-react";
 import connectDB from "@/lib/mongodb";
 import HeroBannerModel from "@/models/HeroBanner";
-import Hotel from "@/models/Hotel";
-import Room from "@/models/Room";
+import Hotel from "@/models/Property";
+import Room from "@/models/Flat";
 import Review from "@/models/Review";
 
 export default async function HeroBanner() {
@@ -127,7 +127,7 @@ export default async function HeroBanner() {
         </div>
 
         <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-2xl leading-tight">
-          {headingText} <span className="text-teal-400">{highlightText}</span> Anywhere in the World.
+          {headingText} <span className="text-teal-400">{highlightText}</span>
         </h1>
 
         <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl leading-relaxed">

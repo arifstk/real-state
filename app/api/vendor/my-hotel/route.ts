@@ -3,8 +3,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import connectDB from "@/lib/mongodb";
-import Hotel from "@/models/Hotel";
-import Room from "@/models/Room";
+import Hotel from "@/models/Property";
+import Room from "@/models/Flat";
 import Booking from "@/models/Booking";
 import { authOptions } from "@/lib/auth";
 

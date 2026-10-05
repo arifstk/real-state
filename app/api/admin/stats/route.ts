@@ -3,8 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import Hotel from "@/models/Hotel";
-import Room from "@/models/Room";
+import Hotel from "@/models/Property";
+import Room from "@/models/Flat";
 import Booking from "@/models/Booking";
 
 export async function GET() {

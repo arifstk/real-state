@@ -6,11 +6,11 @@ import Image from "next/image";
 import Script from "next/script";
 import { cache } from "react";
 import connectDB from "@/lib/mongodb";
-import Hotel from "@/models/Hotel";
-import Room from "@/models/Room";
+import Hotel from "@/models/Property";
+import Room from "@/models/Flat";
 import Booking from "@/models/Booking";
 import Review from "@/models/Review";
-import RoomCard from "@/components/cards/RoomCard";
+import RoomCard from "@/components/cards/FlatCard";
 import { MapPin, Star, Phone, Info } from "lucide-react";
 import mongoose from "mongoose";
 

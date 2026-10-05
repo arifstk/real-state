@@ -1,6 +1,7 @@
-import mongoose, { Schema, models, model, Types } from "mongoose";
+// models/Property.ts
+import { Schema, models, model, Types } from "mongoose";
 
-export interface IHotel {
+export interface IProperty {
   _id: string;
   name: string;
   phone: string;
@@ -13,7 +14,7 @@ export interface IHotel {
   updatedAt: Date;
 }
 
-const HotelSchema = new Schema<IHotel>(
+const PropertySchema = new Schema<IProperty>(
   {
     name: { type: String, required: true, trim: true },
     phone: { type: String, required: true, trim: true },
@@ -26,5 +27,6 @@ const HotelSchema = new Schema<IHotel>(
   { timestamps: true },
 );
 
-const Hotel = models.Hotel || model<IHotel>("Hotel", HotelSchema);
-export default Hotel;
+const Property =
+  models.Property || model<IProperty>("Property", PropertySchema);
+export default Property;

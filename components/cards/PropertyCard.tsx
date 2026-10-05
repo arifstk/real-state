@@ -1,9 +1,8 @@
-
 import Image from "next/image";
 import Link from "next/link";
 import { MapPin, Phone, Star } from "lucide-react";
 
-interface HotelCardProps {
+interface PropertyCardProps {
   id: string;
   name: string;
   city: string;
@@ -14,7 +13,7 @@ interface HotelCardProps {
   rating?: number;
 }
 
-export default function HotelCard({
+export default function PropertyCard({
   id,
   name,
   city,
@@ -23,8 +22,8 @@ export default function HotelCard({
   phone,
   contactNumber,
   rating,
-}: HotelCardProps) {
-  const displayImage = images && images.length > 0 ? images[0] : "/placeholder-hotel.jpg";
+}: PropertyCardProps) {
+  const displayImage = images && images.length > 0 ? images[0] : "/placeholder-property.jpg";
   const displayPhone = contactNumber || phone || "N/A";
 
   return (
@@ -51,7 +50,7 @@ export default function HotelCard({
 
       {/* Content Overlay (Bottom Container) */}
       <div className="absolute bottom-0 inset-x-0 z-20 p-3 flex flex-col justify-end space-y-1">
-        {/* Hotel Details */}
+        {/* Property Details */}
         <div className="space-y-1.5">
           <h3 className="text-xl font-bold text-white tracking-tight line-clamp-1 transition-colors duration-200">
             {name}
@@ -73,13 +72,14 @@ export default function HotelCard({
         {/* Action Button */}
         <div className="pt-2">
           <Link
-            href={`/hotels/${id}`}
+            href={`/properties/${id}`}
             className="w-full inline-flex items-center justify-center py-2.5 px-4 bg-white/10 hover:bg-teal-600 border border-white/20 hover:border-teal-500 backdrop-blur-md text-white text-xs font-semibold rounded-xl transition duration-300 shadow-sm"
           >
-            View Hotel
+            View Property
           </Link>
         </div>
       </div>
     </div>
   );
 }
+

@@ -22,6 +22,7 @@ export default function MobileNav({ role }: MobileNavProps) {
   const isVendor = role === "vendor";
   const isUser = role === "user";
 
+  // Close sidebar when pathname changes safely without cascading state warning
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
@@ -52,36 +53,41 @@ export default function MobileNav({ role }: MobileNavProps) {
         aria-label="Toggle menu"
       >
         <span
-          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${open ? "w-5 rotate-45 translate-y-2 bg-teal-600" : "w-5"
-            }`}
+          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${
+            open ? "w-5 rotate-45 translate-y-2 bg-teal-600" : "w-5"
+          }`}
         />
         <span
-          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${open ? "w-0 opacity-0" : "w-4"
-            }`}
+          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${
+            open ? "w-0 opacity-0" : "w-4"
+          }`}
         />
         <span
-          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${open ? "w-5 -rotate-45 -translate-y-2 bg-teal-600" : "w-5"
-            }`}
+          className={`block h-0.5 bg-slate-800 transition-all duration-300 ease-in-out ${
+            open ? "w-5 -rotate-45 -translate-y-2 bg-teal-600" : "w-5"
+          }`}
         />
       </button>
 
       {/* ── Backdrop ── */}
       <div
-        className={`fixed inset-0 z-40 md:hidden bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ${open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-          }`}
+        className={`fixed inset-0 z-40 md:hidden bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ${
+          open ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
         onClick={() => setOpen(false)}
       />
 
       {/* ── Drawer Sidebar ── */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 w-72 h-screen bg-white shadow-2xl border-r border-teal-100 z-50 md:hidden flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed top-0 left-0 w-72 h-screen bg-white shadow-2xl border-r border-teal-100 z-50 md:hidden flex flex-col transition-transform duration-300 ease-in-out ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         {/* Header Branding & Close Button */}
         <div className="h-16 flex items-center justify-between px-6 border-b border-teal-50 shrink-0">
           <Link href="/" onClick={() => setOpen(false)} className="text-xl font-bold">
-            <span className="text-teal-600 tracking-wider">Stay</span>
+            <span className="text-teal-600 tracking-wider">Real State</span>
           </Link>
           <button
             onClick={() => setOpen(false)}
@@ -105,10 +111,11 @@ export default function MobileNav({ role }: MobileNavProps) {
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium tracking-wide transition-all duration-150 ${active
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium tracking-wide transition-all duration-150 ${
+                  active
                     ? "bg-teal-50 text-teal-600 font-semibold"
                     : "text-slate-600 hover:text-teal-600 hover:bg-teal-50/50"
-                  }`}
+                }`}
               >
                 {link.label}
               </Link>
@@ -197,4 +204,3 @@ export default function MobileNav({ role }: MobileNavProps) {
     </>
   );
 }
-

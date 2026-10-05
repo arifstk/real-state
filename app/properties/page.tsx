@@ -1,6 +1,6 @@
 
 import { Metadata } from "next";
-import HotelsSection from "@/components/sections/HotelsSection";
+import HotelsSection from "@/components/sections/PropertiesSection";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

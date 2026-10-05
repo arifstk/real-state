@@ -2,8 +2,8 @@
 
 import { MetadataRoute } from "next";
 import connectDB from "@/lib/mongodb";
-import Hotel from "@/models/Hotel";
-import Room from "@/models/Room";
+import Hotel from "@/models/Property";
+import Room from "@/models/Flat";
 import { SITE_URL } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {

@@ -4,7 +4,7 @@ import { deleteCloudinaryImages } from "@/lib/uploadImage";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
-import Room from "@/models/Room";
+import Room from "@/models/Flat";
 
 export async function DELETE(
   req: NextRequest,
