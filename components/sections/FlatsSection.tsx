@@ -1,7 +1,6 @@
 import { cache } from "react";
 import connectDB from "@/lib/mongodb";
 import Flat from "@/models/Flat";
-import Property from "@/models/Property";
 import Booking from "@/models/Booking";
 import Review from "@/models/Review";
 import FlatCard from "@/components/cards/FlatCard";
@@ -17,13 +16,9 @@ type FlatType = {
   discountPercent?: number;
   images: string[];
   isAvailable: boolean;
-  property?: {
-    name: string;
-    city?: string;
-    address?: string;
-  };
   rating?: number;
   reviewCount?: number;
+  title?: string;
 };
 
 interface FlatsSectionProps {
@@ -36,8 +31,8 @@ interface FlatsSectionProps {
 const getFlatsData = cache(async (limit: number) => {
   await connectDB();
 
+  // প্রপার্টি পপুলেট অংশ বাদ দেওয়া হয়েছে, কারণ ফ্ল্যাটগুলো এখন সরাসরি নিজস্ব ডেটা ধারণ করে
   const flatsData = await Flat.find()
-    .populate("property", "name city address")
     .sort({ createdAt: -1 })
     .limit(limit)
     .lean();
@@ -98,7 +93,7 @@ const getFlatsData = cache(async (limit: number) => {
 export default async function FlatsSection({
   limit = 8,
   title = "Available Apartments",
-  subtitle = "Explore our handpicked selection of premium residential flats and properties.",
+  subtitle = "Explore our handpicked selection of premium residential flats.",
   showViewAll = true,
 }: FlatsSectionProps) {
   const flats = await getFlatsData(limit);
@@ -129,9 +124,9 @@ export default async function FlatsSection({
           <FlatCard
             key={flat._id}
             id={flat._id}
-            propertyName={flat.property?.name || "Luxury Flat"}
-            city={flat.property?.city || flat.city || ""}
-            address={flat.property?.address || flat.address || ""}
+            propertyName={flat.title || "Luxury Flat"}
+            city={flat.city || ""}
+            address={flat.address || ""}
             flatType={flat.flatType}
             price={flat.price}
             discountPercent={flat.discountPercent}

@@ -5,6 +5,7 @@ import Flat from "@/models/Flat";
 import { getServerSession } from "next-auth";
 import connectDB from "@/lib/mongodb";
 import { authOptions } from "@/lib/auth";
+import { uploadMultipleImages } from "@/lib/uploadImage";
 
 export async function GET(
   req: NextRequest,
@@ -58,11 +59,47 @@ export async function PUT(
     const vendorId = session.user.id;
     const { id } = await params;
 
-    const body = await req.json();
+    const formData = await req.formData();
+
+    const title = formData.get("title") as string;
+    const flatType = formData.get("flatType") as string;
+    const price = Number(formData.get("price"));
+    const bedrooms = Number(formData.get("bedrooms"));
+    const bathrooms = Number(formData.get("bathrooms"));
+    const sizeSqFt = Number(formData.get("sizeSqFt"));
+    const description = formData.get("description") as string;
+    const city = formData.get("city") as string;
+    const address = formData.get("address") as string;
+
+    const existingImages = formData.getAll("existingImages") as string[];
+    const newFiles = formData.getAll("images") as File[];
+
+    let updatedImages = [...existingImages];
+
+    if (newFiles.length > 0 && newFiles[0].size > 0) {
+      const uploaded = await uploadMultipleImages(
+        newFiles,
+        "real-estate/flats",
+      );
+      updatedImages = [...updatedImages, ...uploaded.urls];
+    }
 
     const updatedFlat = await Flat.findOneAndUpdate(
       { _id: id, vendor: vendorId },
-      { $set: body },
+      {
+        $set: {
+          title,
+          flatType,
+          price,
+          bedrooms,
+          bathrooms,
+          sizeSqFt,
+          description,
+          city,
+          address,
+          images: updatedImages,
+        },
+      },
       { new: true },
     );
 

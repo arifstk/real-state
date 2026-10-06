@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const title = formData.get("title") as string;
-    const propertyType = formData.get("propertyType") as string;
+    const flatType = (formData.get("flatType") as string) || "Family";
+
     const price = Number(formData.get("price"));
     const discountPercent = Number(formData.get("discountPercent")) || 0;
     const bedrooms = Number(formData.get("bedrooms")) || 1;
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     const flat = await Flat.create({
       vendor: session.user.id,
       title,
-      propertyType,
+      flatType,
       price,
       discountPercent,
       bedrooms,
