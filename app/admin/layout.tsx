@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 import { LayoutDashboard, Users, Building2, Home, Contact, Settings2, FileText, Lock } from "lucide-react";
 import AdminDashboardView from "./views/DashboardView";
 import AdminUsersView from "./views/UsersView";
-import AdminPropertiesView from "./views/PropertiesView";
 import AdminFlatsView from "./views/FlatsView";
 import AdminHeroBannerView from "./views/AdminHeroBannerView";
 import AdminContactView from "./views/AdminContactView";
@@ -17,7 +16,7 @@ import { FaServicestack } from "react-icons/fa";
 
 export default function AdminLayout() {
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "users" | "properties" | "flats" | "banner" | "settings" | "contact" | "about" | "help-center" | "privacy-policy" | "terms-of-service"
+    "dashboard" | "users" | "flats" | "banner" | "settings" | "contact" | "about" | "help-center" | "privacy-policy" | "terms-of-service"
   >("dashboard");
 
   const [maintenanceMode, setMaintenanceMode] = useState(false);
@@ -62,7 +61,6 @@ export default function AdminLayout() {
     { id: "banner", label: "Hero Banner", icon: LayoutDashboard },
     { id: "contact", label: "Messages", icon: Contact },
     { id: "users", label: "User List", icon: Users },
-    { id: "properties", label: "Properties", icon: Building2 },
     { id: "flats", label: "Flats List", icon: Home },
     { id: "settings", label: "Settings", icon: Settings2 },
     { id: "about", label: "About Us", icon: FileText },
@@ -87,7 +85,7 @@ export default function AdminLayout() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id as "dashboard" | "users" | "properties" | "flats" | "banner" | "settings" | "contact" | "about" | "help-center" | "privacy-policy" | "terms-of-service")}
+                onClick={() => setActiveTab(item.id as "dashboard" | "users"  | "flats" | "banner" | "settings" | "contact" | "about" | "help-center" | "privacy-policy" | "terms-of-service")}
                 className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer ${isActive
                   ? "bg-teal-100 text-teal-900 font-semibold border-r-5 border-teal-600"
                   : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -107,7 +105,6 @@ export default function AdminLayout() {
         {activeTab === "banner" && <AdminHeroBannerView />}
         {activeTab === "contact" && <AdminContactView />}
         {activeTab === "users" && <AdminUsersView />}
-        {activeTab === "properties" && <AdminPropertiesView />}
         {activeTab === "flats" && <AdminFlatsView />}
         {activeTab === "settings" && (
           <div className="space-y-6">

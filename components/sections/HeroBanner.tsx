@@ -4,7 +4,6 @@ import Image from "next/image";
 import { ArrowRight, ShieldCheck, MapPin, Star } from "lucide-react";
 import connectDB from "@/lib/mongodb";
 import HeroBannerModel from "@/models/HeroBanner";
-import Hotel from "@/models/Property";
 import Room from "@/models/Flat";
 import Review from "@/models/Review";
 
@@ -40,45 +39,6 @@ export default async function HeroBanner() {
       if (reviewStats.length > 0 && reviewStats[0].count > 0) {
         totalScore += reviewStats[0].avg * reviewStats[0].count;
         totalRatingsCount += reviewStats[0].count;
-      }
-    } catch {
-    }
-
-    // Source B
-    try {
-      const hotelStats = await Hotel.aggregate([
-        { $match: { rating: { $exists: true, $ne: null } } },
-        {
-          $group: {
-            _id: null,
-            avg: { $avg: { $toDouble: "$rating" } },
-            count: { $sum: 1 },
-          },
-        },
-      ]);
-      if (hotelStats.length > 0 && hotelStats[0].count > 0) {
-        totalScore += hotelStats[0].avg * hotelStats[0].count;
-        totalRatingsCount += hotelStats[0].count;
-      }
-    } catch {
-      // Ignore if Hotel rating isn't present
-    }
-
-    // Source C
-    try {
-      const roomStats = await Room.aggregate([
-        { $match: { rating: { $exists: true, $ne: null } } },
-        {
-          $group: {
-            _id: null,
-            avg: { $avg: { $toDouble: "$rating" } },
-            count: { $sum: 1 },
-          },
-        },
-      ]);
-      if (roomStats.length > 0 && roomStats[0].count > 0) {
-        totalScore += roomStats[0].avg * roomStats[0].count;
-        totalRatingsCount += roomStats[0].count;
       }
     } catch {
     }
@@ -141,14 +101,6 @@ export default async function HeroBanner() {
           >
             <span>{roomsBtnText}</span>
             <ArrowRight size={16} />
-          </Link>
-
-          <Link
-            href="/hotels"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 text-slate-200 text-xs sm:text-sm font-semibold border border-slate-700/60 backdrop-blur-md transition-all active:scale-[0.98]"
-          >
-            <MapPin size={16} className="text-teal-400" />
-            <span>{hotelsBtnText}</span>
           </Link>
         </div>
 

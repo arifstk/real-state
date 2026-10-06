@@ -17,7 +17,7 @@ function AddFlatFormContent() {
   const [loadingFlat, setLoadingFlat] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // রিয়েল এস্টেট প্রোপার্টি ফিল্ডস
+
   const [price, setPrice] = useState<number>(0);
   const [discountPercent, setDiscountPercent] = useState<number>(0);
   const [bedrooms, setBedrooms] = useState<number>(3);
@@ -31,13 +31,13 @@ function AddFlatFormContent() {
   const [files, setFiles] = useState<(File | null)[]>([null, null, null, null]);
   const [previews, setPreviews] = useState<(string | null)[]>([null, null, null, null]);
 
-  // Fetch property/hotel ID
+  // Fetch property/ ID
   useEffect(() => {
     const fetchProperty = async () => {
       try {
-        const res = await fetch("/api/vendor/my-hotel");
+        const res = await fetch("/api/vendor/flats");
         const data = await res.json();
-        setPropertyId(data.property?._id || data.hotel?._id || null);
+        setPropertyId(data.property?._id || null);
       } catch {
         toast.error("Failed to load property info");
       } finally {

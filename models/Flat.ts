@@ -20,10 +20,13 @@ export const AMENITIES = [
 
 export interface IFlat {
   _id: string;
-  property: Types.ObjectId;
+  vendor: Types.ObjectId;
   flatType: string;
+  title: string;
   price: number;
   discountPercent?: number;
+  city: string;
+  address: string;
   amenities: string[];
   images: string[];
   cloudinaryIds: string[];
@@ -34,10 +37,13 @@ export interface IFlat {
 
 const FlatSchema = new Schema<IFlat>(
   {
-    property: { type: Schema.Types.ObjectId, ref: "Property", required: true },
+    vendor: { type: Schema.Types.ObjectId, ref: "User", required: true },
     flatType: { type: String, required: true, enum: FLAT_TYPES },
+    title: { type: String, required: true },
     price: { type: Number, required: true, min: 0 },
     discountPercent: { type: Number, default: 0, min: 0, max: 100 },
+    city: { type: String, required: true },
+    address: { type: String, required: true },
     amenities: { type: [String], default: [] },
     images: { type: [String], default: [] },
     cloudinaryIds: { type: [String], default: [], select: false },

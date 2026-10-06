@@ -1,7 +1,6 @@
 // app/page.tsx
 
 import HeroBanner from "@/components/sections/HeroBanner";
-import HotelsSection from "@/components/sections/PropertiesSection";
 import RoomsSection from "@/components/sections/FlatsSection";
 import { Metadata } from "next";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
@@ -35,7 +34,6 @@ export default function HomePage() {
       <div className="min-h-screen bg-slate-50/50 py-5">
         <div className="max-w-7xl mx-auto space-y-10">
           <HeroBanner />
-          <HotelsSection limit={4} />
           <RoomsSection limit={8} showViewAll={true} />
         </div>
       </div>
