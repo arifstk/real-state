@@ -6,6 +6,8 @@ import Link from "next/link";
 import Script from "next/script";
 import { cache } from "react";
 import mongoose from "mongoose";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Flat from "@/models/Flat";
 import User from "@/models/User";
@@ -66,10 +68,10 @@ const getFlatPageData = cache(async (id: string) => {
   const [reviewsData, activeBooking, similarData] = await Promise.all([
     // NOTE: if your Review/Booking models now use a `flat` field, change `room` -> `flat`
     Review.find({ room: id }).populate("user", "name").sort({ createdAt: -1 }).lean(),
-    // A flat with an active booking (token paid / pending) is treated as reserved
+    // Only a CONFIRMED booking reserves the flat (pending requests don't block other buyers)
     Booking.findOne({
-      room: id,
-      status: { $nin: ["cancelled", "completed"] },
+      flat: id,
+      status: "confirmed",
     })
       .select("_id")
       .lean(),
@@ -155,6 +157,21 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
   }
 
   const { flat, reviews, similarFlats, totalReviews, avgRating, starCounts } = data;
+
+  // Logged-in user's details, used to pre-fill the booking form
+  const session = await getServerSession(authOptions);
+  let currentUser: { name: string; phone: string; email: string } | null = null;
+  if (session?.user?.email) {
+    await connectDB();
+    const dbUser: any = await User.findOne({ email: session.user.email })
+      .select("name email phone")
+      .lean();
+    currentUser = {
+      name: dbUser?.name ?? session.user.name ?? "",
+      phone: dbUser?.phone ?? "",
+      email: dbUser?.email ?? session.user.email ?? "",
+    };
+  }
   const canonicalUrl = `${SITE_URL}/flats/${flat._id}`;
   const hasDiscount = flat.discountPercent > 0;
   const effectivePrice = hasDiscount
@@ -195,14 +212,14 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
     },
     ...(avgRating > 0 && totalReviews > 0
       ? {
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: avgRating.toFixed(1),
-          reviewCount: totalReviews,
-          bestRating: "5",
-          worstRating: "1",
-        },
-      }
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            reviewCount: totalReviews,
+            bestRating: "5",
+            worstRating: "1",
+          },
+        }
       : {}),
   };
 
@@ -297,10 +314,11 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                     {flat.flatType} · For Sale
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${flat.isAvailable
+                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
+                      flat.isAvailable
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-rose-100 text-rose-700"
-                      }`}
+                    }`}
                   >
                     {flat.isAvailable ? "Available" : "Sold / Reserved"}
                   </span>
@@ -368,8 +386,9 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                   {overview.map(({ label, value }, i) => (
                     <div
                       key={label}
-                      className={`flex items-center justify-between px-4 py-3 text-xs border-slate-100 ${i < overview.length - (overview.length % 2 === 0 ? 2 : 1) ? "border-b" : ""
-                        }`}
+                      className={`flex items-center justify-between px-4 py-3 text-xs border-slate-100 ${
+                        i < overview.length - (overview.length % 2 === 0 ? 2 : 1) ? "border-b" : ""
+                      }`}
                     >
                       <dt className="text-slate-400 font-medium">{label}</dt>
                       <dd className="font-semibold text-slate-800">{value}</dd>
@@ -488,6 +507,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                 sellerId={flat.vendor?._id || flat.vendor}
                 price={effectivePrice}
                 isAvailable={flat.isAvailable}
+                defaultValues={currentUser}
               />
 
               {/* EMI */}
@@ -558,10 +578,10 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                     const initial = rev.user?.name ? rev.user.name.charAt(0).toUpperCase() : "G";
                     const reviewDate = rev.createdAt
                       ? new Date(rev.createdAt).toLocaleDateString("en-US", {
-                        month: "long",
-                        day: "numeric",
-                        year: "numeric",
-                      })
+                          month: "long",
+                          day: "numeric",
+                          year: "numeric",
+                        })
                       : "Verified Customer";
 
                     return (

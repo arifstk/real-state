@@ -1,9 +1,9 @@
+// app/flats/[id]/FlatBookingForm.tsx
 "use client";
 
 import { useState } from "react";
 import { CalendarCheck, Banknote, CreditCard, Loader2, CheckCircle2 } from "lucide-react";
 
-// ⚠️ Point this to your existing booking API route
 const BOOKING_ENDPOINT = "/api/bookings";
 
 type PaymentMethod = "online" | "pay-cash";
@@ -13,6 +13,8 @@ interface FlatBookingFormProps {
   sellerId?: string;
   price: number;
   isAvailable: boolean;
+  /** Logged-in user's details (null when logged out) – pre-fills name / phone / email */
+  defaultValues?: { name: string; phone: string; email: string } | null;
 }
 
 const inputCls =
@@ -24,12 +26,13 @@ export default function FlatBookingForm({
   sellerId,
   price,
   isAvailable,
+  defaultValues,
 }: FlatBookingFormProps) {
   const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    visitDate: "", // optional preferred site-visit date (replaces check-in/check-out)
+    name: defaultValues?.name ?? "",
+    phone: defaultValues?.phone ?? "",
+    email: defaultValues?.email ?? "",
+    visitDate: "",
     message: "",
   });
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pay-cash");
@@ -39,8 +42,8 @@ export default function FlatBookingForm({
 
   const update =
     (key: keyof typeof form) =>
-      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-        setForm((f) => ({ ...f, [key]: e.target.value }));
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+      setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -55,6 +58,7 @@ export default function FlatBookingForm({
 
     setLoading(true);
     try {
+      // রিয়েল এস্টেটের জন্য শুধুমাত্র ফ্ল্যাট আইডি, প্রাইস এবং ভিজিট/কন্টাক্ট ইনফো পাঠানো হচ্ছে
       const res = await fetch(BOOKING_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -68,13 +72,13 @@ export default function FlatBookingForm({
           visitDate: form.visitDate || undefined,
           message: form.message.trim() || undefined,
           paymentMethod,
+          paymentType: paymentMethod === "online" ? "online" : "cash",
         }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "Something went wrong. Please try again.");
 
-      // If you have an online payment gateway, redirect here when it returns a URL
       if (paymentMethod === "online" && data?.paymentUrl) {
         window.location.href = data.paymentUrl;
         return;
@@ -118,6 +122,12 @@ export default function FlatBookingForm({
         <CalendarCheck size={16} className="text-teal-600" />
         <h3 className="text-sm font-bold text-slate-800">Book / Schedule a Visit</h3>
       </div>
+
+      {!defaultValues && (
+        <p className="text-[11px] text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          You need to be logged in to request a booking.
+        </p>
+      )}
 
       <div>
         <label className={labelCls}>Full Name</label>
@@ -184,10 +194,11 @@ export default function FlatBookingForm({
                 key={value}
                 type="button"
                 onClick={() => setPaymentMethod(value)}
-                className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition ${active
+                className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition ${
+                  active
                     ? "border-teal-500 bg-teal-50 ring-2 ring-teal-500/20"
                     : "border-slate-200 bg-white hover:border-slate-300"
-                  }`}
+                }`}
               >
                 <Icon size={16} className={active ? "text-teal-600" : "text-slate-400"} />
                 <span className="text-xs font-bold text-slate-800">{label}</span>
