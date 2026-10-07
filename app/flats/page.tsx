@@ -4,11 +4,10 @@ import { Metadata } from "next";
 import Script from "next/script";
 import { cache } from "react";
 import connectDB from "@/lib/mongodb";
-import Hotel from "@/models/Property";
-import Room from "@/models/Flat";
 import Booking from "@/models/Booking";
 import Review from "@/models/Review";
 import RoomsFilterClient from "./RoomsFilterClient";
+import Flat from "@/models/Flat";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -49,12 +48,12 @@ export const metadata: Metadata = {
 const getRoomsListingData = cache(async () => {
   await connectDB();
 
-  if (!Hotel) {
-    console.log("Hotel model initialized");
+  if (!Flat) {
+    console.log("Flat model initialized");
   }
 
   // Query database for base room data on the server
-  const roomsData = await Room.find()
+  const roomsData = await Flat.find()
     .populate("hotel", "name city address phone")
     .sort({ createdAt: -1 })
     .lean();

@@ -4,10 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
-import Flat from "@/models/Flat";
+import Flat, { FLAT_TYPES } from "@/models/Flat";
 import { uploadMultipleImages } from "@/lib/uploadImage";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session || !["vendor", "superadmin"].includes(session.user.role)) {
@@ -34,26 +34,35 @@ export async function POST(req: NextRequest) {
     }
 
     const formData = await req.formData();
-    const title = formData.get("title") as string;
-    const flatType = (formData.get("flatType") as string) || "Family";
 
+    const title = (formData.get("title") as string)?.trim();
+    const flatType = (formData.get("flatType") as string) || "1 Bed Apartment";
     const price = Number(formData.get("price"));
     const discountPercent = Number(formData.get("discountPercent")) || 0;
     const bedrooms = Number(formData.get("bedrooms")) || 1;
     const bathrooms = Number(formData.get("bathrooms")) || 1;
     const sizeSqFt = Number(formData.get("sizeSqFt")) || 0;
-    const floorNo = formData.get("floorNo") as string;
-    const facing = formData.get("facing") as string;
+    const floorNo = (formData.get("floorNo") as string) || "";
+    const facing = (formData.get("facing") as string) || "";
     const parking = formData.get("parking") === "true";
-    const description = formData.get("description") as string;
+    const description = (formData.get("description") as string)?.trim();
     const city = formData.get("city") as string;
-    const address = formData.get("address") as string;
+    const address = (formData.get("address") as string)?.trim();
     const amenities = formData.getAll("amenities") as string[];
     const files = formData.getAll("images") as File[];
 
-    if (!title || !price || price <= 0 || !city || !address) {
+    if (!title || !price || price <= 0 || !city || !address || !description) {
       return NextResponse.json(
-        { message: "Title, Price, City & Address are required" },
+        {
+          message: "Title, Description, Price, City & Address are required",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (!(FLAT_TYPES as readonly string[]).includes(flatType)) {
+      return NextResponse.json(
+        { message: "Invalid flat type" },
         { status: 400 },
       );
     }
