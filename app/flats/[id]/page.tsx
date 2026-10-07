@@ -1,141 +1,195 @@
+// app/flats/[id]/page.tsx
 
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Script from "next/script";
 import { cache } from "react";
+import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
-import Room from "@/models/Flat";
-import Hotel from "@/models/Property";
+import Flat from "@/models/Flat";
 import User from "@/models/User";
 import Review from "@/models/Review";
 import Booking from "@/models/Booking";
 import RoomImageGallery from "@/components/RoomImageGallery";
-import RoomBookingForm from "./RoomBookingForm";
-import { ChevronRight, CheckCircle2, Star, MapPin, Phone, Home } from "lucide-react";
+import FlatBookingForm from "./FlatBookingForm";
+import FlatEmiCalculator from "./FlatEmiCalculator";
+import {
+  ChevronRight,
+  CheckCircle2,
+  Star,
+  MapPin,
+  Phone,
+  Home,
+  BedDouble,
+  Bath,
+  Ruler,
+  Car,
+  Compass,
+  Layers,
+  Building2,
+  MessageCircle,
+  ShieldCheck,
+  BadgeCheck,
+  Sofa,
+  Hash,
+} from "lucide-react";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const FALLBACK_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
 
-interface SingleRoomPageProps {
+interface SingleFlatPageProps {
   params: Promise<{ id: string }>;
 }
 
-const getRoomPageData = cache(async (id: string) => {
+const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+
+/** Bangladeshi numbers: 017xxxxxxxx -> 88017xxxxxxxx (needed by wa.me) */
+const toWhatsAppNumber = (phone: string) => {
+  const digits = phone.replace(/\D/g, "");
+  return digits.startsWith("0") ? `88${digits}` : digits;
+};
+
+const getFlatPageData = cache(async (id: string) => {
+  // Invalid ids would throw a CastError (500) – treat them as "not found"
+  if (!mongoose.isValidObjectId(id)) return null;
+
   await connectDB();
 
-  const _ensureModelsRegistered = [Hotel, User];
+  // Make sure the User model is registered before populate()
+  const _ensureModelsRegistered = [User];
+  void _ensureModelsRegistered;
 
-  const [roomData, reviewsData, activeBooking] = await Promise.all([
-    Room.findById(id).populate("hotel", "name city address phone").lean(),
+  const flatData: any = await Flat.findById(id).populate("vendor", "name phone").lean();
+  if (!flatData) return null;
+
+  const [reviewsData, activeBooking, similarData] = await Promise.all([
+    // NOTE: if your Review/Booking models now use a `flat` field, change `room` -> `flat`
     Review.find({ room: id }).populate("user", "name").sort({ createdAt: -1 }).lean(),
+    // A flat with an active booking (token paid / pending) is treated as reserved
     Booking.findOne({
       room: id,
       status: { $nin: ["cancelled", "completed"] },
-    }).select("_id").lean(),
+    })
+      .select("_id")
+      .lean(),
+    Flat.find({ _id: { $ne: id }, city: flatData.city, isAvailable: { $ne: false } })
+      .select("title price discountPercent images city bedrooms bathrooms sizeSqFt flatType")
+      .sort({ createdAt: -1 })
+      .limit(3)
+      .lean(),
   ]);
 
-  if (!roomData) return null;
-
-  const room = {
-    ...JSON.parse(JSON.stringify(roomData)),
-    isAvailable: !activeBooking,
+  const flat = {
+    ...JSON.parse(JSON.stringify(flatData)),
+    isAvailable: flatData.isAvailable !== false && !activeBooking,
   };
 
   const reviews = JSON.parse(JSON.stringify(reviewsData));
+  const similarFlats = JSON.parse(JSON.stringify(similarData));
 
   const totalReviews = reviews.length;
-  const avgRating = totalReviews > 0
-    ? reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / totalReviews
-    : 0;
+  const avgRating =
+    totalReviews > 0
+      ? reviews.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / totalReviews
+      : 0;
 
   const starCounts = [5, 4, 3, 2, 1].map((star) => ({
     star,
     count: reviews.filter((r: any) => Math.round(r.rating) === star).length,
   }));
 
-  return { room, reviews, totalReviews, avgRating, starCounts };
+  return { flat, reviews, similarFlats, totalReviews, avgRating, starCounts };
 });
 
-export async function generateMetadata({ params }: SingleRoomPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: SingleFlatPageProps): Promise<Metadata> {
   const { id } = await params;
-  const data = await getRoomPageData(id);
+  const data = await getFlatPageData(id);
 
-  if (!data || !data.room) {
-    return { title: "Room Not Found" };
+  if (!data || !data.flat) {
+    return { title: "Flat Not Found" };
   }
 
-  const { room } = data;
-  const canonicalUrl = `${SITE_URL}/rooms/${room._id}`;
-  const description = room.description
-    ? room.description.slice(0, 155)
-    : `Book the ${room.roomType} at ${room.hotel?.name || 'Luxury Stay'}. Best rates, modern amenities, and instant reservation.`;
+  const { flat } = data;
+  const canonicalUrl = `${SITE_URL}/flats/${flat._id}`;
+  const description = flat.description
+    ? flat.description.slice(0, 155)
+    : `${flat.flatType} for sale in ${flat.city}. ${flat.bedrooms} beds, ${flat.bathrooms} baths, ${flat.sizeSqFt} sq ft.`;
 
-  const mainImage = room.images?.[0] || FALLBACK_OG_IMAGE;
-  const effectivePrice = room.discountPercent
-    ? room.pricePerNight * (1 - room.discountPercent / 100)
-    : room.pricePerNight;
+  const mainImage = flat.images?.[0] || FALLBACK_OG_IMAGE;
+  const effectivePrice = flat.discountPercent
+    ? flat.price * (1 - flat.discountPercent / 100)
+    : flat.price;
 
   return {
-    title: `${room.roomType} - ${room.hotel?.name || "Luxury Stay"}`,
+    title: `${flat.title} - ${flat.city}`,
     description,
-    alternates: {
-      canonical: canonicalUrl,
-    },
+    alternates: { canonical: canonicalUrl },
     openGraph: {
-      title: `${room.roomType} | ${room.hotel?.name || "Luxury Stay"}`,
+      title: `${flat.title} | ${flat.city}`,
       description,
       url: canonicalUrl,
       type: "website",
-      images: [
-        {
-          url: mainImage,
-          width: 1200,
-          height: 630,
-          alt: room.roomType,
-        },
-      ],
+      images: [{ url: mainImage, width: 1200, height: 630, alt: flat.title }],
     },
     twitter: {
       card: "summary_large_image",
-      title: `${room.roomType} | ${room.hotel?.name || "Luxury Stay"}`,
+      title: `${flat.title} | ${flat.city}`,
       description,
       images: [mainImage],
     },
     other: {
       "product:price:amount": effectivePrice.toFixed(2),
-      "product:price:currency": "USD",
-      "product:availability": room.isAvailable ? "in stock" : "out of stock",
+      "product:price:currency": "BDT",
+      "product:availability": flat.isAvailable ? "in stock" : "out of stock",
     },
   };
 }
 
-export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
+export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
   const { id } = await params;
-  const data = await getRoomPageData(id);
+  const data = await getFlatPageData(id);
 
   if (!data) {
     notFound();
   }
 
-  const { room, reviews, totalReviews, avgRating, starCounts } = data;
-  const canonicalUrl = `${SITE_URL}/rooms/${room._id}`;
-  const effectivePrice = room.discountPercent
-    ? room.pricePerNight * (1 - room.discountPercent / 100)
-    : room.pricePerNight;
+  const { flat, reviews, similarFlats, totalReviews, avgRating, starCounts } = data;
+  const canonicalUrl = `${SITE_URL}/flats/${flat._id}`;
+  const hasDiscount = flat.discountPercent > 0;
+  const effectivePrice = hasDiscount
+    ? flat.price * (1 - flat.discountPercent / 100)
+    : flat.price;
+  const pricePerSqFt = flat.sizeSqFt > 0 ? effectivePrice / flat.sizeSqFt : null;
+  const fullAddress = [flat.address, flat.area, flat.city].filter(Boolean).join(", ");
+  const vendorPhone: string | undefined = flat.vendor?.phone;
+  const listingId = String(flat._id).slice(-6).toUpperCase();
 
-  const roomJsonLd = {
+  const flatJsonLd = {
     "@context": "https://schema.org",
-    "@type": "HotelRoom",
-    name: room.roomType,
-    description: room.description,
-    image: room.images ?? [],
+    "@type": "Apartment",
+    name: flat.title,
+    description: flat.description,
+    image: flat.images ?? [],
+    numberOfBedrooms: flat.bedrooms,
+    numberOfBathroomsTotal: flat.bathrooms,
+    floorSize: {
+      "@type": "QuantitativeValue",
+      value: flat.sizeSqFt,
+      unitCode: "FTK",
+    },
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: flat.address,
+      addressLocality: flat.city,
+      addressCountry: "BD",
+    },
     offers: {
       "@type": "Offer",
       url: canonicalUrl,
-      priceCurrency: "USD",
+      priceCurrency: "BDT",
       price: effectivePrice.toFixed(2),
-      availability: room.isAvailable
+      availability: flat.isAvailable
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
     },
@@ -157,103 +211,179 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Rooms", item: `${SITE_URL}/rooms` },
-      { "@type": "ListItem", position: 3, name: room.roomType, item: canonicalUrl },
+      { "@type": "ListItem", position: 2, name: "Flats", item: `${SITE_URL}/flats` },
+      { "@type": "ListItem", position: 3, name: flat.title, item: canonicalUrl },
     ],
   };
+
+  // Escape "<" so user-entered text can never close the script tag
+  const toJsonLd = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c");
+
+  // Quick-glance cards (hidden automatically when a value is missing)
+  const specs = [
+    { icon: BedDouble, label: "Bedrooms", value: flat.bedrooms },
+    { icon: Bath, label: "Bathrooms", value: flat.bathrooms },
+    { icon: Ruler, label: "Size", value: flat.sizeSqFt ? `${flat.sizeSqFt} sq ft` : null },
+    { icon: Building2, label: "Balconies", value: flat.balconies ?? null },
+    { icon: Layers, label: "Floor", value: flat.floorNo || null },
+    { icon: Compass, label: "Facing", value: flat.facing || null },
+    { icon: Car, label: "Parking", value: flat.parking ? "Available" : null },
+    { icon: Sofa, label: "Furnishing", value: flat.furnishing || null },
+  ].filter((s) => s.value !== null && s.value !== undefined && s.value !== "");
+
+  // Property overview table
+  const overview: { label: string; value: string | number | null }[] = [
+    { label: "Property Type", value: flat.flatType || null },
+    { label: "Purpose", value: "For Sale" },
+    { label: "Total Area", value: flat.sizeSqFt ? `${flat.sizeSqFt} sq ft` : null },
+    { label: "Price / sq ft", value: pricePerSqFt ? formatBDT(pricePerSqFt) : null },
+    {
+      label: "Floor",
+      value: flat.floorNo ? `${flat.floorNo}${flat.totalFloors ? ` of ${flat.totalFloors}` : ""}` : null,
+    },
+    { label: "Facing", value: flat.facing || null },
+    { label: "Furnishing", value: flat.furnishing || null },
+    { label: "Year Built", value: flat.builtYear || null },
+    {
+      label: "Handover",
+      value: flat.handoverDate
+        ? new Date(flat.handoverDate).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+        : null,
+    },
+    { label: "Listing ID", value: `#${listingId}` },
+  ].filter((o) => o.value !== null && o.value !== undefined && o.value !== "");
 
   return (
     <>
       <Script
-        id="room-jsonld"
+        id="flat-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(roomJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(flatJsonLd) }}
       />
       <Script
-        id="room-breadcrumb-jsonld"
+        id="flat-breadcrumb-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbJsonLd) }}
       />
 
       <div className="min-h-screen bg-slate-50/50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-
+          {/* Breadcrumb */}
           <nav className="flex items-center gap-2 text-xs text-slate-500 font-medium">
             <Link href="/" className="hover:text-slate-800 transition">
               <Home size={14} />
             </Link>
             <ChevronRight size={14} />
-            <Link href="/rooms" className="hover:text-slate-800 transition">
-              Rooms
+            <Link href="/flats" className="hover:text-slate-800 transition">
+              Flats
             </Link>
             <ChevronRight size={14} />
-            <span className="text-slate-800 font-semibold">{room.roomType}</span>
+            <span className="text-slate-800 font-semibold">{flat.title}</span>
           </nav>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-            <div className="lg:col-span-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* ───────── Main column ───────── */}
+            <div className="lg:col-span-8 space-y-8">
               <RoomImageGallery
-                images={room.images || []}
-                roomType={room.roomType}
-                discountPercent={room.discountPercent}
+                images={flat.images || []}
+                roomType={flat.title}
+                discountPercent={flat.discountPercent}
               />
-            </div>
 
-            <div className="lg:col-span-7 space-y-8">
+              {/* Title + price */}
               <div>
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-bold text-teal-600 uppercase tracking-wider">
-                    {room.hotel?.name || "Luxury Stay"}
+                    {flat.flatType} · For Sale
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${room.isAvailable
+                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${flat.isAvailable
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-rose-100 text-rose-700"
                       }`}
                   >
-                    {room.isAvailable ? "Available" : "Booked"}
+                    {flat.isAvailable ? "Available" : "Sold / Reserved"}
                   </span>
                 </div>
 
-                <h1 className="text-3xl font-extrabold text-slate-800 mt-1">
-                  {room.roomType}
-                </h1>
-                <div className="flex items-center gap-1">
-                  <MapPin size={14} className="text-xs text-slate-400" />
-                  {room.hotel?.address && (
-                    <p className="text-xs text-slate-400 mt-0.5">{room.hotel.address}</p>
-                  )}
-                  <span className="text-xs text-slate-300 mt-0.5">|</span>
-                  {room.hotel?.city && (
-                    <p className="text-xs text-slate-400 mt-0.5">{room.hotel.city}</p>
-                  )}
+                <h1 className="text-3xl font-extrabold text-slate-800 mt-1">{flat.title}</h1>
+
+                <div className="flex items-center gap-1 mt-2">
+                  <MapPin size={14} className="text-slate-400 shrink-0" />
+                  <p className="text-xs text-slate-500">{fullAddress}</p>
                 </div>
 
-                <div className="flex items-center gap-1 mt-1">
-                  <Phone size={14} className="text-xs text-slate-400" />
-                  {room.hotel?.phone && (
-                    <a
-                      href={`tel:${room.hotel.phone}`}
-                      className="text-xs text-slate-400 tracking-wider hover:text-teal-600 hover:underline transition-colors"
-                    >
-                      {room.hotel.phone}
-                    </a>
+                <div className="flex flex-wrap items-baseline gap-3 mt-3">
+                  <span className="text-3xl font-extrabold text-teal-600">
+                    {formatBDT(effectivePrice)}
+                  </span>
+                  {hasDiscount && (
+                    <>
+                      <span className="text-sm text-slate-400 line-through">
+                        {formatBDT(flat.price)}
+                      </span>
+                      <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
+                        {flat.discountPercent}% OFF
+                      </span>
+                    </>
+                  )}
+                  {pricePerSqFt && (
+                    <span className="text-xs text-slate-400">
+                      ≈ {formatBDT(pricePerSqFt)} / sq ft
+                    </span>
                   )}
                 </div>
               </div>
 
+              {/* Key specs */}
+              {specs.length > 0 && (
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {specs.map(({ icon: Icon, label, value }) => (
+                    <div
+                      key={label}
+                      className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200/70"
+                    >
+                      <Icon size={18} className="text-teal-600 shrink-0" />
+                      <div>
+                        <p className="text-[11px] text-slate-400">{label}</p>
+                        <p className="text-sm font-semibold text-slate-800">{value}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Description */}
               <div className="space-y-2">
-                <h3 className="text-sm font-bold text-slate-800">Description</h3>
-                <p className="text-sm text-slate-600 leading-relaxed">
-                  {room.description || "Enjoy a luxurious stay with world-class facilities and maximum comfort."}
+                <h3 className="text-sm font-bold text-slate-800">About this flat</h3>
+                <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+                  {flat.description || "No description has been added for this flat yet."}
                 </p>
               </div>
 
-              {room.amenities && room.amenities.length > 0 && (
+              {/* Property overview */}
+              <div className="space-y-3 pt-4 border-t border-slate-200/60">
+                <h3 className="text-sm font-bold text-slate-800">Property Overview</h3>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 bg-white rounded-2xl border border-slate-200/70 overflow-hidden">
+                  {overview.map(({ label, value }, i) => (
+                    <div
+                      key={label}
+                      className={`flex items-center justify-between px-4 py-3 text-xs border-slate-100 ${i < overview.length - (overview.length % 2 === 0 ? 2 : 1) ? "border-b" : ""
+                        }`}
+                    >
+                      <dt className="text-slate-400 font-medium">{label}</dt>
+                      <dd className="font-semibold text-slate-800">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+
+              {/* Amenities */}
+              {flat.amenities && flat.amenities.length > 0 && (
                 <div className="space-y-3 pt-4 border-t border-slate-200/60">
-                  <h3 className="text-sm font-bold text-slate-800">Room Amenities</h3>
+                  <h3 className="text-sm font-bold text-slate-800">Features &amp; Amenities</h3>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {room.amenities.map((amenity: string, idx: number) => (
+                    {flat.amenities.map((amenity: string, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center gap-2 text-xs font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-200/70"
@@ -266,24 +396,117 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
                 </div>
               )}
 
-              <div className="pt-4 border-t border-slate-200/60">
-                <RoomBookingForm
-                  roomId={room._id}
-                  hotelId={room.hotel?._id || room.hotel}
-                  pricePerNight={room.pricePerNight}
-                  discountPercent={room.discountPercent}
-                  isAvailable={room.isAvailable}
-                />
-              </div>
+              {/* Floor plan (optional field: flat.floorPlan = image url) */}
+              {flat.floorPlan && (
+                <div className="space-y-3 pt-4 border-t border-slate-200/60">
+                  <h3 className="text-sm font-bold text-slate-800">Floor Plan</h3>
+                  <div className="bg-white p-3 rounded-2xl border border-slate-200/70">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={flat.floorPlan}
+                      alt={`${flat.title} floor plan`}
+                      loading="lazy"
+                      className="w-full max-h-[480px] object-contain"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Location */}
+              {fullAddress && (
+                <div className="space-y-3 pt-4 border-t border-slate-200/60">
+                  <h3 className="text-sm font-bold text-slate-800">Location</h3>
+                  <div className="rounded-2xl overflow-hidden border border-slate-200/70 bg-white">
+                    <iframe
+                      title={`Map of ${flat.title}`}
+                      src={`https://www.google.com/maps?q=${encodeURIComponent(fullAddress)}&output=embed`}
+                      className="w-full h-72 border-0"
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+
+            {/* ───────── Sidebar ───────── */}
+            <aside className="lg:col-span-4 space-y-5 lg:sticky lg:top-6">
+              {/* Price card */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 space-y-1">
+                <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">
+                  Sale Price
+                </p>
+                <p className="text-2xl font-extrabold text-teal-600">{formatBDT(effectivePrice)}</p>
+                {pricePerSqFt && (
+                  <p className="text-xs text-slate-400">{formatBDT(pricePerSqFt)} per sq ft</p>
+                )}
+                <p className="flex items-center gap-1 text-[11px] text-slate-400 pt-1">
+                  <Hash size={11} /> Listing ID: {listingId}
+                </p>
+              </div>
+
+              {/* Seller / agent */}
+              <div className="bg-white p-5 rounded-2xl border border-slate-200/80 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full bg-teal-600 text-white font-bold flex items-center justify-center shrink-0">
+                    {(flat.vendor?.name || "S").charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-800 flex items-center gap-1">
+                      {flat.vendor?.name || "Property Owner"}
+                      <BadgeCheck size={14} className="text-teal-600" />
+                    </p>
+                    <p className="text-[11px] text-slate-400">Listed seller / agent</p>
+                  </div>
+                </div>
+
+                {vendorPhone && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href={`tel:${vendorPhone}`}
+                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-teal-600 text-white text-xs font-bold hover:bg-teal-700 transition"
+                    >
+                      <Phone size={14} /> Call
+                    </a>
+                    <a
+                      href={`https://wa.me/${toWhatsAppNumber(vendorPhone)}?text=${encodeURIComponent(
+                        `Hi, I'm interested in "${flat.title}" (ID #${listingId}).`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 py-2.5 rounded-xl bg-emerald-500 text-white text-xs font-bold hover:bg-emerald-600 transition"
+                    >
+                      <MessageCircle size={14} /> WhatsApp
+                    </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Booking request */}
+              <FlatBookingForm
+                flatId={flat._id}
+                sellerId={flat.vendor?._id || flat.vendor}
+                price={effectivePrice}
+                isAvailable={flat.isAvailable}
+              />
+
+              {/* EMI */}
+              <FlatEmiCalculator price={effectivePrice} />
+
+              <p className="flex items-start gap-2 text-[11px] text-slate-400 px-1">
+                <ShieldCheck size={14} className="text-teal-600 shrink-0 mt-px" />
+                Always verify ownership papers and visit the property before making any payment.
+              </p>
+            </aside>
           </div>
 
+          {/* Reviews */}
           <div className="space-y-4 pt-4 border-t border-slate-200/60">
-            <h3 className="text-lg font-bold text-slate-800">Customer Reviews</h3>
+            <h3 className="text-lg font-bold text-slate-800">Buyer Reviews</h3>
 
             {totalReviews === 0 ? (
               <p className="text-xs text-slate-400 bg-white p-4 rounded-2xl border border-slate-200/70">
-                No reviews posted for this room yet.
+                No reviews posted for this flat yet.
               </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
@@ -339,7 +562,7 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
                         day: "numeric",
                         year: "numeric",
                       })
-                      : "Verified Guest";
+                      : "Verified Customer";
 
                     return (
                       <div
@@ -359,7 +582,7 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
                             </div>
                           </div>
                           <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2.5 py-1 rounded-full border border-emerald-100">
-                            ✓ Verified Purchase
+                            ✓ Verified Buyer
                           </span>
                         </div>
 
@@ -376,9 +599,7 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
                             />
                           ))}
                         </div>
-                        <p className="text-xs text-slate-600 leading-relaxed">
-                          {rev.comment}
-                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed">{rev.comment}</p>
                       </div>
                     );
                   })}
@@ -386,6 +607,59 @@ export default async function SingleRoomPage({ params }: SingleRoomPageProps) {
               </div>
             )}
           </div>
+
+          {/* Similar flats */}
+          {similarFlats.length > 0 && (
+            <div className="space-y-4 pt-4 border-t border-slate-200/60">
+              <h3 className="text-lg font-bold text-slate-800">
+                Similar flats in {flat.city}
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                {similarFlats.map((s: any) => {
+                  const sPrice = s.discountPercent
+                    ? s.price * (1 - s.discountPercent / 100)
+                    : s.price;
+                  return (
+                    <Link
+                      key={s._id}
+                      href={`/flats/${s._id}`}
+                      className="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover:shadow-md transition"
+                    >
+                      <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                        {s.images?.[0] && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={s.images[0]}
+                            alt={s.title}
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                          />
+                        )}
+                      </div>
+                      <div className="p-4 space-y-1.5">
+                        <p className="text-[10px] font-bold text-teal-600 uppercase tracking-wider">
+                          {s.flatType}
+                        </p>
+                        <h4 className="text-sm font-bold text-slate-800 line-clamp-1">{s.title}</h4>
+                        <p className="text-base font-extrabold text-teal-600">{formatBDT(sPrice)}</p>
+                        <p className="text-[11px] text-slate-400 flex items-center gap-3 pt-1">
+                          <span className="flex items-center gap-1">
+                            <BedDouble size={12} /> {s.bedrooms}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Bath size={12} /> {s.bathrooms}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Ruler size={12} /> {s.sizeSqFt} sq ft
+                          </span>
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
