@@ -21,7 +21,7 @@ export default function RoomImageGallery({
 
   if (!images || images.length === 0) {
     return (
-      <div className="relative aspect-square w-full bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/80">
+      <div className="relative aspect-video w-full bg-slate-100 rounded-3xl overflow-hidden border border-slate-200/80">
         <Image src="/placeholder-room.jpg" alt={roomType} fill className="object-cover" />
       </div>
     );
@@ -30,13 +30,13 @@ export default function RoomImageGallery({
   return (
     <div className="space-y-4">
       {/* Main Image View */}
-      <div className="relative aspect-square w-full bg-slate-50 rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
+      <div className="relative aspect-video w-full bg-slate-50 rounded-3xl overflow-hidden border border-slate-200/80 shadow-xs">
         <Image
           src={selectedImage}
           alt={roomType}
           fill
           priority
-          className="object-cover transition-all duration-300 ease-in-out"
+          className="object-fill transition-all duration-300 ease-in-out"
           sizes="(max-width: 768px) 100vw, 50vw"
         />
 
@@ -57,16 +57,16 @@ export default function RoomImageGallery({
               key={index}
               onClick={() => setSelectedImage(img)}
               type="button"
-              className={`relative aspect-square w-full rounded-2xl overflow-hidden bg-slate-100 border-2 transition duration-200 focus:outline-none cursor-pointer ${isSelected
+              className={`relative aspect-video w-full rounded-2xl overflow-hidden bg-slate-100 border-2 transition duration-200 focus:outline-none cursor-pointer ${isSelected
                   ? "border-teal-600 "
-                  : "border-transparent opacity-75 hover:opacity-100"
+                  : "border-transparent opacity-70 hover:opacity-100"
                 }`}
             >
               <Image
                 src={img}
                 alt={`${roomType} thumb ${index + 1}`}
                 fill
-                className="object-cover"
+                className="object-fill"
                 sizes="100px"
               />
             </button>

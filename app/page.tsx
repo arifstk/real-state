@@ -16,6 +16,7 @@ import {
   Calculator,
   ArrowRight,
 } from "lucide-react";
+import CustomerReviewsSection from "@/components/sections/CustomerReviewsSection";
 
 export const revalidate = 60;
 
@@ -149,6 +150,10 @@ export default function HomePage() {
             </div>
           </section>
 
+          <section>
+            <CustomerReviewsSection limit={6} title="What our customers say" />
+          </section>
+
           {/* Seller CTA */}
           <section className="bg-teal-600 rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="text-center sm:text-left space-y-1">
@@ -160,7 +165,7 @@ export default function HomePage() {
               </p>
             </div>
             <Link
-              href="/vendor-dashboard"
+              href="/contact"
               className="shrink-0 inline-flex items-center gap-2 bg-white text-teal-700 font-bold text-sm px-6 py-3 rounded-xl hover:bg-teal-50 transition"
             >
               Become a seller <ArrowRight size={16} />

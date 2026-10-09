@@ -15,10 +15,12 @@ interface ContactInfo {
 
 const SUBJECTS = [
   "General Inquiry",
-  "Booking Issue",
-  "Payment & Refund",
-  "Hotel Partnership",
+  "Flat Booking",
+  "Property Visit Schedule",
+  "Payment & Installment",
+  "Developer / Vendor Partnership",
   "Technical Support",
+  "Become a Seller",
   "Feedback",
   "Other",
 ];
