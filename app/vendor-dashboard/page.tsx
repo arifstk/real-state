@@ -36,6 +36,13 @@ type RecentBooking = {
   createdAt: string;
 };
 
+const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
+  pending: { label: "Pending", cls: "bg-amber-50 text-amber-700" },
+  confirmed: { label: "Confirmed", cls: "bg-emerald-50 text-emerald-700" },
+  completed: { label: "Sold", cls: "bg-purple-50 text-purple-700" },
+  cancelled: { label: "Cancelled", cls: "bg-rose-50 text-rose-700" },
+};
+
 export default function VendorDashboard() {
   const [stats, setStats] = useState<Stats>({
     totalSoldFlats: 0,
@@ -109,7 +116,7 @@ export default function VendorDashboard() {
           </div>
           <div className="mt-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Earning (Month)</p>
-            <p className="text-3xl font-bold text-slate-800 mt-1">${stats.monthlyRevenue.toLocaleString()}</p>
+            <p className="text-lg font-bold text-slate-800 mt-1 tracking-tighter">${stats.monthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -123,7 +130,7 @@ export default function VendorDashboard() {
           </div>
           <div className="mt-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Earning (Year)</p>
-            <p className="text-3xl font-bold text-slate-800 mt-1">${stats.yearlyRevenue.toLocaleString()}</p>
+            <p className="text-lg font-bold text-slate-800 mt-1 tracking-tighter">${stats.yearlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -210,9 +217,12 @@ export default function VendorDashboard() {
                   <p className="text-xs text-slate-500 mt-0.5">Customer: {booking.customerName}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-bold text-emerald-600">৳{booking.amount.toLocaleString()}</p>
-                  <span className="text-[10px] bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-medium inline-block mt-1">
-                    {booking.status}
+                  <p className="text-sm font-bold text-emerald-600">${booking.amount.toLocaleString()}</p>
+                  <span
+                    className={`text-[10px] px-2 py-0.5 rounded-full font-medium inline-block mt-1 ${(STATUS_BADGE[booking.status] ?? STATUS_BADGE.pending).cls
+                      }`}
+                  >
+                    {(STATUS_BADGE[booking.status] ?? { label: booking.status }).label}
                   </span>
                 </div>
               </div>

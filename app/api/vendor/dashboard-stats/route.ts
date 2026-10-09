@@ -6,40 +6,60 @@ import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/mongodb";
 import Flat from "@/models/Flat";
 import Booking from "@/models/Booking";
+import User from "@/models/User";
+
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    await dbConnect();
     const session = await getServerSession(authOptions);
 
     if (!session || !session.user) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const vendorId = session.user.id;
+    await dbConnect();
 
-    const vendorFlats = await Flat.find({ vendor: vendorId });
+    // session.user.id may be missing – fall back to an email lookup
+    let vendorId: string | undefined = (session.user as any).id;
+    if (!vendorId && session.user.email) {
+      const u: any = await User.findOne({ email: session.user.email })
+        .select("_id")
+        .lean();
+      vendorId = u?._id?.toString();
+    }
+    if (!vendorId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    // ── Flats ────────────────────────────────────────────────
+    const vendorFlats: any[] = await Flat.find({ vendor: vendorId })
+      .select("_id isSold isAvailable")
+      .lean();
     const flatIds = vendorFlats.map((f) => f._id);
 
+    const totalSoldFlats = vendorFlats.filter((f) => f.isSold).length;
+    // Active = listed for sale (not sold, not switched off)
     const activeFlats = vendorFlats.filter(
-      (f) => f.status === "active" || f.status === "available",
+      (f) => !f.isSold && f.isAvailable !== false,
     ).length;
 
-    const bookings = await Booking.find({ flatId: { $in: flatIds } });
+    // ── Bookings ─────────────────────────────────────────────
+    const bookings: any[] = await Booking.find({ flat: { $in: flatIds } })
+      .select("user name totalPrice status createdAt updatedAt")
+      .lean();
 
     const totalBookings = bookings.length;
-    const soldFlats = bookings.filter(
-      (b) => b.status === "completed" || b.status === "sold",
-    );
-    const totalSoldFlats = soldFlats.length;
     const pendingBookings = bookings.filter(
       (b) => b.status === "pending",
     ).length;
 
-    const uniqueCustomers = new Set(
-      bookings.map((b) => b.customer?.toString() || b.customerName),
+    const totalCustomers = new Set(
+      bookings.map((b) => b.user?.toString() || b.name),
     ).size;
 
+    // ── Revenue: completed (sold) bookings only ──────────────
+    // The sale date is when the booking was marked completed (= last update)
     const now = new Date();
     const currentMonth = now.getMonth();
     const currentYear = now.getFullYear();
@@ -49,43 +69,45 @@ export async function GET() {
     let totalRevenue = 0;
 
     bookings.forEach((b) => {
-      if (
-        b.status === "completed" ||
-        b.status === "sold" ||
-        b.status === "approved"
-      ) {
-        totalRevenue += b.amount || 0;
-        const bDate = new Date(b.createdAt);
-        if (bDate.getFullYear() === currentYear) {
-          yearlyRevenue += b.amount || 0;
-          if (bDate.getMonth() === currentMonth) {
-            monthlyRevenue += b.amount || 0;
-          }
-        }
+      if (b.status !== "completed") return;
+      const amount = b.totalPrice || 0;
+      const soldAt = new Date(b.updatedAt || b.createdAt);
+
+      totalRevenue += amount;
+      if (soldAt.getFullYear() === currentYear) {
+        yearlyRevenue += amount;
+        if (soldAt.getMonth() === currentMonth) monthlyRevenue += amount;
       }
     });
 
-    const stats = {
-      totalSoldFlats,
-      activeFlats,
-      monthlyRevenue,
-      yearlyRevenue,
-      totalBookings,
-      pendingBookings,
-      totalCustomers: uniqueCustomers,
-      totalRevenue,
-    };
+    // ── Recent bookings (with flat title + buyer name) ───────
+    const recent: any[] = await Booking.find({ flat: { $in: flatIds } })
+      .populate("flat", "title flatType")
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
 
-    const recentBookings = bookings
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, 5);
+    const recentBookings = recent.map((b) => ({
+      _id: b._id.toString(),
+      flatTitle: b.flat?.title || b.flat?.flatType || "Flat",
+      customerName: b.name || "Buyer",
+      amount: b.totalPrice || 0,
+      status: b.status,
+      createdAt: b.createdAt,
+    }));
 
     return NextResponse.json(
       {
-        stats,
+        stats: {
+          totalSoldFlats,
+          activeFlats,
+          monthlyRevenue,
+          yearlyRevenue,
+          totalBookings,
+          pendingBookings,
+          totalCustomers,
+          totalRevenue,
+        },
         recentBookings,
       },
       { status: 200 },
