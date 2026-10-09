@@ -7,7 +7,6 @@ import FlatCard from "@/components/cards/FlatCard";
 import { Filter, RotateCcw, Search, Sparkles } from "lucide-react";
 import { CITIES } from "@/lib/constants";
 
-// Same list as the Flat model. Kept here so the client bundle never imports mongoose.
 const FLAT_TYPES = [
   "1 Bed Apartment",
   "2 Bed Apartment",
@@ -34,6 +33,7 @@ export type FlatListItem = {
   amenities: string[];
   images: string[];
   isAvailable: boolean;
+  isSold?: boolean;
   vendorName?: string;
   rating?: number;
   reviewCount?: number;
@@ -50,9 +50,6 @@ const getEffectivePrice = (flat: FlatListItem) =>
     ? Math.round(flat.price - (flat.price * flat.discountPercent) / 100)
     : flat.price;
 
-// The flat type is what the card shows ("2 Bed Apartment"), so it decides the
-// bedroom count. The stored `bedrooms` value is only used when the type has no
-// number in it (e.g. Penthouse).
 const getBedrooms = (flat: FlatListItem): number | null => {
   const match = flat.flatType.match(/^(\d+)\s*Bed/i);
   if (match) return Number(match[1]);
@@ -62,7 +59,6 @@ const getBedrooms = (flat: FlatListItem): number | null => {
 };
 
 export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientProps) {
-  // Highest price in the data, rounded up, so the slider always fits real listings
   const priceCeiling = useMemo(() => {
     const max = Math.max(0, ...initialFlats.map(getEffectivePrice));
     return Math.max(PRICE_STEP, Math.ceil(max / PRICE_STEP) * PRICE_STEP);
@@ -73,7 +69,7 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
   const [selectedType, setSelectedType] = useState("");
   const [selectedCity, setSelectedCity] = useState("");
   const [selectedBeds, setSelectedBeds] = useState("");
-  const [maxPriceInput, setMaxPriceInput] = useState<number | null>(null); // null = no limit
+  const [maxPriceInput, setMaxPriceInput] = useState<number | null>(null);
   const [onlyAvailable, setOnlyAvailable] = useState(false);
 
   const maxPrice = maxPriceInput ?? priceCeiling;
@@ -253,8 +249,8 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                   type="button"
                   onClick={() => setSelectedBeds("")}
                   className={`py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${selectedBeds === ""
-                      ? "bg-teal-600 text-white"
-                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    ? "bg-teal-600 text-white"
+                    : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                     }`}
                 >
                   Any
@@ -265,8 +261,8 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                     type="button"
                     onClick={() => setSelectedBeds(selectedBeds === opt ? "" : opt)}
                     className={`py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${selectedBeds === opt
-                        ? "bg-teal-600 text-white"
-                        : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      ? "bg-teal-600 text-white"
+                      : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                       }`}
                   >
                     {opt}
@@ -336,19 +332,17 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                   <FlatCard
                     key={flat._id}
                     id={flat._id}
-                    title={flat.title}
+                    propertyName={flat.title}
                     flatType={flat.flatType}
                     city={flat.city}
                     address={flat.address}
                     price={flat.price}
                     discountPercent={flat.discountPercent}
-                    bedrooms={flat.bedrooms}
-                    bathrooms={flat.bathrooms}
-                    sizeSqFt={flat.sizeSqFt}
                     images={flat.images}
                     rating={flat.rating}
                     reviewCount={flat.reviewCount}
                     isAvailable={flat.isAvailable}
+                    isSold={flat.isSold}
                   />
                 ))}
               </div>

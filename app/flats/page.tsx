@@ -3,6 +3,7 @@
 import { Metadata } from "next";
 import Script from "next/script";
 import { cache } from "react";
+import type { Types } from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Flat from "@/models/Flat";
 import User from "@/models/User";
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
 };
 
 type LeanFlat = {
-  _id: { toString(): string };
+  _id: Types.ObjectId;
   title: string;
   flatType: string;
   price: number;
@@ -60,6 +61,8 @@ type LeanFlat = {
   amenities?: string[];
   images?: string[];
   isAvailable?: boolean;
+  isSold?: boolean;
+  status?: string;
   vendor?: { name?: string; phone?: string } | null;
 };
 
@@ -81,7 +84,7 @@ const getFlatsListingData = cache(async (): Promise<FlatListItem[]> => {
     .sort({ createdAt: -1 })
     .lean()) as unknown as LeanFlat[];
 
-  const flatIds = flatsData.map((f) => f._id);
+  const flatIds: Types.ObjectId[] = flatsData.map((f) => f._id);
 
   const [activeBookingsRaw, reviewStatsRaw] = await Promise.all([
     Booking.find({
@@ -121,6 +124,7 @@ const getFlatsListingData = cache(async (): Promise<FlatListItem[]> => {
   return flatsData.map((flat) => {
     const id = flat._id.toString();
     const stats = reviewMap.get(id);
+    const isSold = flat.isSold === true || flat.status === "sold";
 
     return {
       _id: id,
@@ -135,7 +139,9 @@ const getFlatsListingData = cache(async (): Promise<FlatListItem[]> => {
       address: flat.address,
       amenities: flat.amenities ?? [],
       images: flat.images ?? [],
-      isAvailable: flat.isAvailable !== false && !bookedFlatIds.has(id),
+      isSold,
+      isAvailable:
+        !isSold && flat.isAvailable !== false && !bookedFlatIds.has(id),
       vendorName: flat.vendor?.name,
       rating: stats?.rating ?? 0,
       reviewCount: stats?.reviewCount ?? 0,
