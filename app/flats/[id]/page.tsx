@@ -75,7 +75,7 @@ const getFlatPageData = cache(async (id: string) => {
     })
       .select("_id")
       .lean(),
-    Flat.find({ _id: { $ne: id }, city: flatData.city, isAvailable: { $ne: false } })
+    Flat.find({ _id: { $ne: id }, city: flatData.city, isAvailable: { $ne: false }, isSold: { $ne: true } })
       .select("title price discountPercent images city bedrooms bathrooms sizeSqFt flatType")
       .sort({ createdAt: -1 })
       .limit(3)
@@ -84,7 +84,8 @@ const getFlatPageData = cache(async (id: string) => {
 
   const flat = {
     ...JSON.parse(JSON.stringify(flatData)),
-    isAvailable: flatData.isAvailable !== false && !activeBooking,
+    isSold: !!flatData.isSold,
+    isAvailable: flatData.isAvailable !== false && !flatData.isSold && !activeBooking,
   };
 
   const reviews = JSON.parse(JSON.stringify(reviewsData));
@@ -212,14 +213,14 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
     },
     ...(avgRating > 0 && totalReviews > 0
       ? {
-          aggregateRating: {
-            "@type": "AggregateRating",
-            ratingValue: avgRating.toFixed(1),
-            reviewCount: totalReviews,
-            bestRating: "5",
-            worstRating: "1",
-          },
-        }
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: avgRating.toFixed(1),
+          reviewCount: totalReviews,
+          bestRating: "5",
+          worstRating: "1",
+        },
+      }
       : {}),
   };
 
@@ -314,13 +315,12 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                     {flat.flatType} · For Sale
                   </span>
                   <span
-                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${
-                      flat.isAvailable
+                    className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${flat.isAvailable
                         ? "bg-emerald-100 text-emerald-700"
                         : "bg-rose-100 text-rose-700"
-                    }`}
+                      }`}
                   >
-                    {flat.isAvailable ? "Available" : "Sold / Reserved"}
+                    {flat.isSold ? "SOLD" : flat.isAvailable ? "Available" : "Reserved"}
                   </span>
                 </div>
 
@@ -386,9 +386,8 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                   {overview.map(({ label, value }, i) => (
                     <div
                       key={label}
-                      className={`flex items-center justify-between px-4 py-3 text-xs border-slate-100 ${
-                        i < overview.length - (overview.length % 2 === 0 ? 2 : 1) ? "border-b" : ""
-                      }`}
+                      className={`flex items-center justify-between px-4 py-3 text-xs border-slate-100 ${i < overview.length - (overview.length % 2 === 0 ? 2 : 1) ? "border-b" : ""
+                        }`}
                     >
                       <dt className="text-slate-400 font-medium">{label}</dt>
                       <dd className="font-semibold text-slate-800">{value}</dd>
@@ -578,10 +577,10 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                     const initial = rev.user?.name ? rev.user.name.charAt(0).toUpperCase() : "G";
                     const reviewDate = rev.createdAt
                       ? new Date(rev.createdAt).toLocaleDateString("en-US", {
-                          month: "long",
-                          day: "numeric",
-                          year: "numeric",
-                        })
+                        month: "long",
+                        day: "numeric",
+                        year: "numeric",
+                      })
                       : "Verified Customer";
 
                     return (

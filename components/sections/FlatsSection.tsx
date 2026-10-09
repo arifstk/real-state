@@ -1,3 +1,5 @@
+// components/sections/FlatsSection.tsx
+
 import { cache } from "react";
 import connectDB from "@/lib/mongodb";
 import Flat from "@/models/Flat";
@@ -16,6 +18,7 @@ type FlatType = {
   discountPercent?: number;
   images: string[];
   isAvailable: boolean;
+  isSold?: boolean;
   rating?: number;
   reviewCount?: number;
   title?: string;
@@ -30,8 +33,6 @@ interface FlatsSectionProps {
 
 const getFlatsData = cache(async (limit: number) => {
   await connectDB();
-
-  // প্রপার্টি পপুলেট অংশ বাদ দেওয়া হয়েছে, কারণ ফ্ল্যাটগুলো এখন সরাসরি নিজস্ব ডেটা ধারণ করে
   const flatsData = await Flat.find()
     .sort({ createdAt: -1 })
     .limit(limit)
@@ -46,7 +47,7 @@ const getFlatsData = cache(async (limit: number) => {
   const [activeBookings, reviewStats] = await Promise.all([
     Booking.find({
       flat: { $in: flatIds },
-      status: { $nin: ["cancelled", "completed"] },
+      status: "confirmed",
     }).select("flat"),
 
     Review.aggregate([
@@ -79,9 +80,13 @@ const getFlatsData = cache(async (limit: number) => {
     const flatIdStr = flat._id.toString();
     const stats = reviewMap.get(flatIdStr);
 
+    const isSold = !!(flat as any).isSold;
+
     return {
       ...flat,
-      isAvailable: !bookedFlatIds.has(flatIdStr),
+      isSold,
+      isAvailable:
+        !isSold && (flat as any).isAvailable !== false && !bookedFlatIds.has(flatIdStr),
       rating: stats?.rating ?? flat.rating ?? 0,
       reviewCount: stats?.reviewCount ?? flat.reviewCount ?? 0,
     };
@@ -134,6 +139,7 @@ export default async function FlatsSection({
             rating={flat.rating}
             reviewCount={flat.reviewCount}
             isAvailable={flat.isAvailable}
+            isSold={flat.isSold}
           />
         ))}
       </div>

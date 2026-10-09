@@ -1,123 +1,111 @@
 // app/api/vendor/bookings/[id]/route.ts
 
 import { NextResponse } from "next/server";
+import mongoose from "mongoose";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Booking from "@/models/Booking";
-import { revalidatePath } from "next/cache";
-import { sendBookingEmail } from "@/lib/mail";
+import Flat from "@/models/Flat";
+import User from "@/models/User";
+import { authOptions } from "@/lib/auth";
+
+const ALLOWED_STATUSES = ["pending", "confirmed", "completed", "cancelled"];
 
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { id } = await params;
     const session = await getServerSession(authOptions);
 
-    if (!session || !["vendor", "superadmin"].includes(session.user.role)) {
-      return NextResponse.json({ message: "Not allowed" }, { status: 403 });
+    if (!session?.user) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+    if (!mongoose.isValidObjectId(id)) {
+      return NextResponse.json(
+        { message: "Invalid booking." },
+        { status: 400 },
+      );
     }
 
-    const { id } = await params;
-    const { status, paymentStatus } = await req.json();
+    const { status } = await req.json();
+    if (!ALLOWED_STATUSES.includes(status)) {
+      return NextResponse.json({ message: "Invalid status." }, { status: 400 });
+    }
 
     await connectDB();
 
-    // Fetch original booking with user and hotel details
-    const existingBooking = await Booking.findById(id)
-      .populate("user", "name email")
-      .populate("hotel", "name");
+    // session.user.id may be missing – fall back to an email lookup
+    let userId: string | undefined = (session.user as any).id;
+    if (!userId && session.user.email) {
+      const u = await User.findOne({ email: session.user.email }).select("_id");
+      userId = u?._id?.toString();
+    }
+    if (!userId) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!existingBooking) {
+    const booking: any = await Booking.findById(id);
+    if (!booking) {
       return NextResponse.json(
-        { message: "Booking record not found in database" },
+        { message: "Booking not found." },
         { status: 404 },
       );
     }
 
-    const updateFields: Record<string, any> = {};
-
-    if (status) {
-      updateFields.status = status;
-      if (status === "completed") {
-        updateFields.paymentStatus = "paid";
-      }
+    const flat: any = await Flat.findById(booking.flat).select("vendor isSold");
+    if (!flat) {
+      return NextResponse.json({ message: "Flat not found." }, { status: 404 });
     }
 
-    if (paymentStatus) {
-      updateFields.paymentStatus = paymentStatus;
+    // Only the flat's owner (or a superadmin) can manage its bookings
+    const isOwner = flat.vendor?.toString() === userId;
+    const isSuperAdmin = (session.user as any).role === "superadmin";
+    if (!isOwner && !isSuperAdmin) {
+      return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
-    const updatedBooking = await Booking.findByIdAndUpdate(
-      id,
-      { $set: updateFields },
-      { new: true, runValidators: true },
-    );
+    // A completed (sold) booking is final – avoids a flat marked SOLD with an open booking
+    if (booking.status === "completed") {
+      return NextResponse.json(
+        { message: "This flat is already sold. The booking can't be changed." },
+        { status: 409 },
+      );
+    }
+    if (status === "completed" && flat.isSold) {
+      return NextResponse.json(
+        { message: "This flat is already marked as sold." },
+        { status: 409 },
+      );
+    }
 
-    revalidatePath("/vendor-dashboard/bookings");
-    revalidatePath("/my-bookings");
+    booking.status = status;
+    await booking.save();
 
-    // Email Notification Logic
-    if (existingBooking.user?.email) {
-      const emailPayload = {
-        to: existingBooking.user.email,
-        userName: existingBooking.user.name || "Valued Customer",
-        hotelName: existingBooking.hotel?.name || "our hotel",
-        checkIn: existingBooking.checkIn,
-        checkOut: existingBooking.checkOut,
-        totalPrice: existingBooking.totalPrice,
-        bookingId: existingBooking._id.toString(),
-        // Crucial Fix: Send the real payment fields to lib/mail.ts
-        paymentStatus:
-          updatedBooking.paymentStatus || existingBooking.paymentStatus,
-        paymentType: updatedBooking.paymentType || existingBooking.paymentType,
-      };
-
-      try {
-        // 1. Order Confirmed by Vendor Email
-        const isNowConfirmed =
-          updatedBooking.status === "confirmed" &&
-          existingBooking.status !== "confirmed";
-
-        if (isNowConfirmed) {
-          await sendBookingEmail("CONFIRMED", emailPayload);
-        }
-
-        // 2. Payment Completed Email
-        const isNowPaid =
-          updatedBooking.paymentStatus === "paid" &&
-          existingBooking.paymentStatus !== "paid";
-
-        if (isNowPaid) {
-          await sendBookingEmail("PAYMENT_COMPLETED", emailPayload);
-        }
-
-        // 3. Checked-Out / Completed Email
-        const isNowCheckedOut =
-          (updatedBooking.status === "checked-out" ||
-            updatedBooking.status === "completed") &&
-          existingBooking.status !== "checked-out" &&
-          existingBooking.status !== "completed";
-
-        if (isNowCheckedOut) {
-          await sendBookingEmail("CHECKED_OUT", emailPayload);
-        }
-      } catch (emailError) {
-        console.error(
-          "Failed to send status update email via Nodemailer:",
-          emailError,
-        );
-      }
+    // "completed" = deal done → flat becomes SOLD and other open requests are closed
+    if (status === "completed") {
+      await Flat.findByIdAndUpdate(flat._id, {
+        isSold: true,
+        isAvailable: false,
+      });
+      await Booking.updateMany(
+        {
+          flat: flat._id,
+          _id: { $ne: booking._id },
+          status: { $in: ["pending", "confirmed"] },
+        },
+        { status: "cancelled" },
+      );
     }
 
     return NextResponse.json({
-      message: "Booking record updated successfully",
-      booking: updatedBooking,
+      message: "Booking updated.",
+      status: booking.status,
     });
   } catch (error: any) {
     return NextResponse.json(
-      { message: error.message || "Failed to update booking status" },
+      { message: error.message || "Internal Server Error" },
       { status: 500 },
     );
   }

@@ -2,11 +2,9 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarCheck, Banknote, CreditCard, Loader2, CheckCircle2 } from "lucide-react";
+import { CalendarCheck, Loader2, CheckCircle2 } from "lucide-react";
 
 const BOOKING_ENDPOINT = "/api/bookings";
-
-type PaymentMethod = "online" | "pay-cash";
 
 interface FlatBookingFormProps {
   flatId: string;
@@ -35,15 +33,14 @@ export default function FlatBookingForm({
     visitDate: "",
     message: "",
   });
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pay-cash");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const update =
     (key: keyof typeof form) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
-      setForm((f) => ({ ...f, [key]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -58,7 +55,6 @@ export default function FlatBookingForm({
 
     setLoading(true);
     try {
-      // রিয়েল এস্টেটের জন্য শুধুমাত্র ফ্ল্যাট আইডি, প্রাইস এবং ভিজিট/কন্টাক্ট ইনফো পাঠানো হচ্ছে
       const res = await fetch(BOOKING_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,18 +67,12 @@ export default function FlatBookingForm({
           email: form.email.trim() || undefined,
           visitDate: form.visitDate || undefined,
           message: form.message.trim() || undefined,
-          paymentMethod,
-          paymentType: paymentMethod === "online" ? "online" : "cash",
         }),
       });
 
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.message || "Something went wrong. Please try again.");
 
-      if (paymentMethod === "online" && data?.paymentUrl) {
-        window.location.href = data.paymentUrl;
-        return;
-      }
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -110,11 +100,6 @@ export default function FlatBookingForm({
       </div>
     );
   }
-
-  const methods: { value: PaymentMethod; label: string; hint: string; icon: typeof Banknote }[] = [
-    { value: "pay-cash", label: "Pay Cash", hint: "Pay in person", icon: Banknote },
-    { value: "online", label: "Pay Online", hint: "bKash / Card", icon: CreditCard },
-  ];
 
   return (
     <div className="bg-white p-5 rounded-2xl border border-slate-200/80 space-y-4">
@@ -182,31 +167,6 @@ export default function FlatBookingForm({
           onChange={update("message")}
           placeholder="I'd like to know more about..."
         />
-      </div>
-
-      <div>
-        <label className={labelCls}>Payment Method</label>
-        <div className="grid grid-cols-2 gap-2">
-          {methods.map(({ value, label, hint, icon: Icon }) => {
-            const active = paymentMethod === value;
-            return (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setPaymentMethod(value)}
-                className={`flex flex-col items-start gap-1 p-3 rounded-xl border text-left transition ${
-                  active
-                    ? "border-teal-500 bg-teal-50 ring-2 ring-teal-500/20"
-                    : "border-slate-200 bg-white hover:border-slate-300"
-                }`}
-              >
-                <Icon size={16} className={active ? "text-teal-600" : "text-slate-400"} />
-                <span className="text-xs font-bold text-slate-800">{label}</span>
-                <span className="text-[10px] text-slate-400">{hint}</span>
-              </button>
-            );
-          })}
-        </div>
       </div>
 
       {error && (
