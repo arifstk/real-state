@@ -2,37 +2,26 @@
 
 import { MetadataRoute } from "next";
 import connectDB from "@/lib/mongodb";
-import Hotel from "@/models/Property";
-import Room from "@/models/Flat";
+import Flat from "@/models/Flat";
 import { SITE_URL } from "@/lib/seo";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (SITE_URL || "").replace(/\/+$/, "");
 
-  let hotelUrls: MetadataRoute.Sitemap = [];
-  let roomUrls: MetadataRoute.Sitemap = [];
+  let flatUrls: MetadataRoute.Sitemap = [];
 
   try {
     await connectDB();
 
-    // Fetch Hotels
-    const hotels = await Hotel.find().select("_id updatedAt").lean();
+    // Fetch all flats
+    const flats = await Flat.find().select("_id updatedAt isSold").lean();
 
-    hotelUrls = hotels.map((h: any) => ({
-      url: `${baseUrl}/hotels/${h._id}`,
-      lastModified: h.updatedAt ? new Date(h.updatedAt) : new Date(),
-      changeFrequency: "daily",
-      priority: 0.8,
-    }));
-
-    // Fetch Rooms
-    const rooms = await Room.find().select("_id updatedAt").lean();
-
-    roomUrls = rooms.map((r: any) => ({
-      url: `${baseUrl}/rooms/${r._id}`,
-      lastModified: r.updatedAt ? new Date(r.updatedAt) : new Date(),
-      changeFrequency: "weekly",
-      priority: 0.7,
+    flatUrls = flats.map((f: any) => ({
+      url: `${baseUrl}/flats/${f._id}`,
+      lastModified: f.updatedAt ? new Date(f.updatedAt) : new Date(),
+      // Sold flats stay reachable but are far less important to crawl
+      changeFrequency: f.isSold ? "monthly" : "weekly",
+      priority: f.isSold ? 0.3 : 0.8,
     }));
   } catch (error) {
     console.error("[Sitemap Generation Error]:", error);
@@ -47,16 +36,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 1.0,
     },
     {
-      url: `${baseUrl}/hotels`,
+      url: `${baseUrl}/flats`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 0.9,
-    },
-    {
-      url: `${baseUrl}/rooms`,
-      lastModified: new Date(),
-      changeFrequency: "daily",
-      priority: 0.8,
     },
     {
       url: `${baseUrl}/about`,
@@ -90,5 +73,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  return [...staticRoutes, ...hotelUrls, ...roomUrls];
+  return [...staticRoutes, ...flatUrls];
 }
+
