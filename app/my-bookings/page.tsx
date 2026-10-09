@@ -22,7 +22,6 @@ export default async function MyBookingsPage() {
 
   await connectDB();
 
-  // Make sure these models are registered before populate()
   const _register = [Flat, User];
   void _register;
 

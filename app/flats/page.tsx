@@ -1,77 +1,101 @@
-// app/rooms/page.tsx
+// app/flats/page.tsx
 
 import { Metadata } from "next";
 import Script from "next/script";
 import { cache } from "react";
 import connectDB from "@/lib/mongodb";
+import Flat from "@/models/Flat";
+import User from "@/models/User";
 import Booking from "@/models/Booking";
 import Review from "@/models/Review";
-import RoomsFilterClient from "./RoomsFilterClient";
-import Flat from "@/models/Flat";
+import FlatsFilterClient, { type FlatListItem } from "./FlatsFilterClient";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export const revalidate = 0;
 
+const TITLE = "Explore Flats | Find Your Next Home";
+const DESCRIPTION =
+  "Browse apartments, penthouses and studio flats across Bangladesh. Compare prices, size, location, amenities and customer reviews.";
+
 export const metadata: Metadata = {
-  title: "Explore Rooms | Best Rates & Instant Booking",
-  description:
-    "Browse luxury and budget-friendly rooms across top destinations. Compare prices, amenities, availability, and guest reviews.",
+  title: TITLE,
+  description: DESCRIPTION,
   alternates: {
-    canonical: `${SITE_URL}/rooms`,
+    canonical: `${SITE_URL}/flats`,
   },
   openGraph: {
-    title: "Explore Rooms | Best Rates & Instant Booking",
-    description:
-      "Browse luxury and budget-friendly rooms across top destinations. Compare prices, amenities, availability, and guest reviews.",
-    url: `${SITE_URL}/rooms`,
+    title: TITLE,
+    description: DESCRIPTION,
+    url: `${SITE_URL}/flats`,
     type: "website",
     images: [
       {
         url: `${SITE_URL}/og-image.jpg`,
         width: 1200,
         height: 630,
-        alt: "Available Rooms",
+        alt: "Available Flats",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Explore Rooms | Best Rates & Instant Booking",
-    description:
-      "Browse luxury and budget-friendly rooms across top destinations. Compare prices, amenities, availability, and guest reviews.",
+    title: TITLE,
+    description: DESCRIPTION,
     images: [`${SITE_URL}/og-image.jpg`],
   },
 };
 
-// Cached server database fetcher using React cache()
-const getRoomsListingData = cache(async () => {
+type LeanFlat = {
+  _id: { toString(): string };
+  title: string;
+  flatType: string;
+  price: number;
+  discountPercent?: number;
+  bedrooms?: number;
+  bathrooms?: number;
+  sizeSqFt?: number;
+  city: string;
+  address: string;
+  amenities?: string[];
+  images?: string[];
+  isAvailable?: boolean;
+  vendor?: { name?: string; phone?: string } | null;
+};
+
+type LeanBooking = { flat: { toString(): string } };
+
+type ReviewStat = {
+  _id: { toString(): string };
+  averageRating: number;
+  reviewCount: number;
+};
+
+const getFlatsListingData = cache(async (): Promise<FlatListItem[]> => {
   await connectDB();
+  const _ensureModelsRegistered = [User];
+  void _ensureModelsRegistered;
 
-  if (!Flat) {
-    console.log("Flat model initialized");
-  }
-
-  // Query database for base room data on the server
-  const roomsData = await Flat.find()
-    .populate("hotel", "name city address phone")
+  const flatsData = (await Flat.find()
+    .populate("vendor", "name phone")
     .sort({ createdAt: -1 })
-    .lean();
+    .lean()) as unknown as LeanFlat[];
 
-  const roomIds = roomsData.map((room) => room._id);
+  const flatIds = flatsData.map((f) => f._id);
 
-  // Fetch active bookings and review stats concurrently
-  const [activeBookings, reviewStats] = await Promise.all([
+  const [activeBookingsRaw, reviewStatsRaw] = await Promise.all([
     Booking.find({
-      room: { $in: roomIds },
+      flat: { $in: flatIds },
       status: { $nin: ["cancelled", "completed"] },
-    }).select("room"),
+    })
+      .select("flat")
+      .lean(),
 
     Review.aggregate([
-      { $match: { room: { $in: roomIds } } },
+      { $match: { flat: { $in: flatIds } } },
       {
         $group: {
-          _id: "$room",
+          _id: "$flat",
           averageRating: { $avg: "$rating" },
           reviewCount: { $sum: 1 },
         },
@@ -79,7 +103,10 @@ const getRoomsListingData = cache(async () => {
     ]),
   ]);
 
-  const bookedRoomIds = new Set(activeBookings.map((b) => b.room.toString()));
+  const activeBookings = activeBookingsRaw as unknown as LeanBooking[];
+  const reviewStats = reviewStatsRaw as ReviewStat[];
+
+  const bookedFlatIds = new Set(activeBookings.map((b) => b.flat.toString()));
 
   const reviewMap = new Map(
     reviewStats.map((stat) => [
@@ -88,68 +115,74 @@ const getRoomsListingData = cache(async () => {
         rating: Math.round(stat.averageRating * 10) / 10,
         reviewCount: stat.reviewCount,
       },
-    ])
+    ]),
   );
 
-  // Transform database models to clean JSON objects for client consumption
-  const initialRooms = roomsData.map((room: any) => {
-    const roomIdStr = room._id.toString();
-    const stats = reviewMap.get(roomIdStr);
+  return flatsData.map((flat) => {
+    const id = flat._id.toString();
+    const stats = reviewMap.get(id);
 
     return {
-      _id: roomIdStr,
-      roomType: room.roomType,
-      pricePerNight: room.pricePerNight,
-      discountPercent: room.discountPercent,
-      amenities: room.amenities || [],
-      images: room.images || [],
-      isAvailable: !bookedRoomIds.has(roomIdStr),
-      hotel: room.hotel
-        ? {
-          name: room.hotel.name,
-          city: room.hotel.city,
-          address: room.hotel.address,
-          phone: room.hotel.phone,
-        }
-        : undefined,
-      city: room.hotel?.city,
-      address: room.hotel?.address,
-      rating: stats?.rating ?? room.rating ?? 0,
-      reviewCount: stats?.reviewCount ?? room.reviewCount ?? 0,
+      _id: id,
+      title: flat.title,
+      flatType: flat.flatType,
+      price: flat.price,
+      discountPercent: flat.discountPercent ?? 0,
+      bedrooms: flat.bedrooms ?? 0,
+      bathrooms: flat.bathrooms ?? 0,
+      sizeSqFt: flat.sizeSqFt ?? 0,
+      city: flat.city,
+      address: flat.address,
+      amenities: flat.amenities ?? [],
+      images: flat.images ?? [],
+      isAvailable: flat.isAvailable !== false && !bookedFlatIds.has(id),
+      vendorName: flat.vendor?.name,
+      rating: stats?.rating ?? 0,
+      reviewCount: stats?.reviewCount ?? 0,
     };
   });
-
-  return initialRooms;
 });
 
-export default async function RoomsListingPage() {
-  const initialRooms = await getRoomsListingData();
+const toJsonLd = (obj: unknown) => JSON.stringify(obj).replace(/</g, "\\u003c");
+
+export default async function FlatsListingPage() {
+  const initialFlats = await getFlatsListingData();
 
   const itemListingJsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: initialRooms.map((room: any, index: number) => ({
-      "@type": "ListItem",
-      position: index + 1,
-      item: {
-        "@type": "HotelRoom",
-        name: room.roomType,
-        url: `${SITE_URL}/rooms/${room._id}`,
-        image: room.images?.[0] || "",
-        offers: {
-          "@type": "Offer",
-          priceCurrency: "USD",
-          price: (
-            room.discountPercent
-              ? room.pricePerNight * (1 - room.discountPercent / 100)
-              : room.pricePerNight
-          ).toFixed(2),
-          availability: room.isAvailable
-            ? "https://schema.org/InStock"
-            : "https://schema.org/OutOfStock",
+    itemListElement: initialFlats.map((flat, index) => {
+      const effectivePrice = flat.discountPercent
+        ? flat.price * (1 - flat.discountPercent / 100)
+        : flat.price;
+
+      return {
+        "@type": "ListItem",
+        position: index + 1,
+        item: {
+          "@type": "Apartment",
+          name: flat.title,
+          url: `${SITE_URL}/flats/${flat._id}`,
+          image: flat.images[0] || "",
+          numberOfBedrooms: flat.bedrooms,
+          numberOfBathroomsTotal: flat.bathrooms,
+          address: {
+            "@type": "PostalAddress",
+            streetAddress: flat.address,
+            addressLocality: flat.city,
+            addressCountry: "BD",
+          },
+          offers: {
+            "@type": "Offer",
+            priceCurrency: "BDT",
+            price: effectivePrice.toFixed(2),
+            availability: flat.isAvailable
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          },
         },
-      },
-    })),
+      };
+    }),
   };
 
   const breadcrumbJsonLd = {
@@ -157,23 +190,23 @@ export default async function RoomsListingPage() {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Rooms", item: `${SITE_URL}/rooms` },
+      { "@type": "ListItem", position: 2, name: "Flats", item: `${SITE_URL}/flats` },
     ],
   };
 
   return (
     <>
       <Script
-        id="rooms-itemlist-jsonld"
+        id="flats-itemlist-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(itemListingJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(itemListingJsonLd) }}
       />
       <Script
-        id="rooms-breadcrumb-jsonld"
+        id="flats-breadcrumb-jsonld"
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+        dangerouslySetInnerHTML={{ __html: toJsonLd(breadcrumbJsonLd) }}
       />
-      <RoomsFilterClient initialRooms={initialRooms} />
+      <FlatsFilterClient initialFlats={initialFlats} />
     </>
   );
 }
