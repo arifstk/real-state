@@ -6,6 +6,7 @@ import Link from "next/link";
 import mongoose from "mongoose";
 import connectDB from "@/lib/mongodb";
 import Booking from "@/models/Booking";
+import Review from "@/models/Review";
 import Flat from "@/models/Flat";
 import User from "@/models/User";
 import { authOptions } from "@/lib/auth";
@@ -22,6 +23,7 @@ export default async function MyBookingsPage() {
 
   await connectDB();
 
+  // Make sure these models are registered before populate()
   const _register = [Flat, User];
   void _register;
 
@@ -47,7 +49,20 @@ export default async function MyBookingsPage() {
     .sort({ createdAt: -1 })
     .lean();
 
-  const bookings = JSON.parse(JSON.stringify(userBookingsData));
+  // Flats this user has already reviewed
+  const userReviews = await Review.find({ user: new mongoose.Types.ObjectId(userId) })
+    .select("flat")
+    .lean();
+  const reviewedFlatIds = new Set(userReviews.map((r: any) => r.flat?.toString()).filter(Boolean));
+
+  const bookings = JSON.parse(
+    JSON.stringify(
+      userBookingsData.map((b: any) => ({
+        ...b,
+        isReviewed: reviewedFlatIds.has((b.flat?._id ?? b.flat)?.toString()),
+      })),
+    ),
+  );
 
   return (
     <div className="min-h-screen bg-slate-50/50 py-10">

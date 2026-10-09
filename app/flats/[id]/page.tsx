@@ -16,6 +16,7 @@ import Booking from "@/models/Booking";
 import RoomImageGallery from "@/components/RoomImageGallery";
 import FlatBookingForm from "./FlatBookingForm";
 import FlatEmiCalculator from "./FlatEmiCalculator";
+import FlatReviewButton from "@/components/FlatReviewButton";
 import {
   ChevronRight,
   CheckCircle2,
@@ -66,8 +67,7 @@ const getFlatPageData = cache(async (id: string) => {
   if (!flatData) return null;
 
   const [reviewsData, activeBooking, similarData] = await Promise.all([
-    // NOTE: if your Review/Booking models now use a `flat` field, change `room` -> `flat`
-    Review.find({ room: id }).populate("user", "name").sort({ createdAt: -1 }).lean(),
+    Review.find({ flat: id }).populate("user", "name").sort({ createdAt: -1 }).lean(),
     // Only a CONFIRMED booking reserves the flat (pending requests don't block other buyers)
     Booking.findOne({
       flat: id,
@@ -162,16 +162,30 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
   // Logged-in user's details, used to pre-fill the booking form
   const session = await getServerSession(authOptions);
   let currentUser: { name: string; phone: string; email: string } | null = null;
+  // Set only for the buyer whose booking was marked SOLD (completed)
+  let reviewBookingId: string | null = null;
+  let hasReviewed = false;
   if (session?.user?.email) {
     await connectDB();
     const dbUser: any = await User.findOne({ email: session.user.email })
-      .select("name email mobile")
+      .select("_id name email mobile")
       .lean();
     currentUser = {
       name: dbUser?.name ?? session.user.name ?? "",
       phone: dbUser?.mobile ?? "",
       email: dbUser?.email ?? session.user.email ?? "",
     };
+
+    if (dbUser?._id) {
+      const [completedBooking, existingReview] = await Promise.all([
+        Booking.findOne({ flat: id, user: dbUser._id, status: "completed" }).select("_id").lean(),
+        Review.findOne({ flat: id, user: dbUser._id }).select("_id").lean(),
+      ]);
+      if (completedBooking) {
+        reviewBookingId = (completedBooking as any)._id.toString();
+        hasReviewed = !!existingReview;
+      }
+    }
   }
   const canonicalUrl = `${SITE_URL}/flats/${flat._id}`;
   const hasDiscount = flat.discountPercent > 0;
@@ -521,7 +535,25 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
 
           {/* Reviews */}
           <div className="space-y-4 pt-4 border-t border-slate-200/60">
-            <h3 className="text-lg font-bold text-slate-800">Buyer Reviews</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h3 className="text-lg font-bold text-slate-800">Buyer Reviews</h3>
+                {!reviewBookingId && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    The buyer can post a review once the seller marks the flat as sold.
+                  </p>
+                )}
+              </div>
+
+              {reviewBookingId && !hasReviewed && (
+                <FlatReviewButton bookingId={reviewBookingId} flatTitle={flat.title} />
+              )}
+              {reviewBookingId && hasReviewed && (
+                <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full">
+                  ✓ You&apos;ve reviewed this flat
+                </span>
+              )}
+            </div>
 
             {totalReviews === 0 ? (
               <p className="text-xs text-slate-400 bg-white p-4 rounded-2xl border border-slate-200/70">

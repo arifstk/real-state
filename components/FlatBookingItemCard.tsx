@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import FlatReviewButton from "@/components/FlatReviewButton";
 import { MapPin, Calendar, Banknote, Phone, MessageCircle, MessageSquareText } from "lucide-react";
 
 const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
@@ -119,6 +120,16 @@ export default function FlatBookingItemCard({ booking }: { booking: any }) {
             >
               View Flat
             </Link>
+          )}
+
+          {booking.status === "completed" && flat?._id && (
+            booking.isReviewed ? (
+              <span className="px-4 py-2 rounded-xl bg-emerald-50 text-emerald-700 text-xs font-bold border border-emerald-100">
+                ✓ Reviewed
+              </span>
+            ) : (
+              <FlatReviewButton bookingId={booking._id} flatTitle={flat.title} />
+            )
           )}
 
           {canContactSeller && (

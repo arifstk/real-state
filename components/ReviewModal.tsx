@@ -1,3 +1,5 @@
+// components/ReviewModal.tsx
+
 "use client";
 
 import { useState } from "react";
@@ -6,18 +8,14 @@ import toast from "react-hot-toast";
 
 type ReviewModalProps = {
   bookingId: string;
-  roomId: string;
-  hotelId: string;
-  hotelName: string;
+  flatTitle: string;
   onClose: () => void;
   onSuccess: () => void;
 };
 
 export default function ReviewModal({
   bookingId,
-  roomId,
-  hotelId,
-  hotelName,
+  flatTitle,
   onClose,
   onSuccess,
 }: ReviewModalProps) {
@@ -34,16 +32,10 @@ export default function ReviewModal({
       const res = await fetch("/api/reviews", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId,
-          roomId,
-          hotelId,
-          rating,
-          comment,
-        }),
+        body: JSON.stringify({ bookingId, rating, comment }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
       if (res.ok) {
         toast.success("Review posted successfully!");
@@ -65,15 +57,14 @@ export default function ReviewModal({
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-slate-400 hover:text-slate-600"
+          aria-label="Close"
         >
           <X size={20} />
         </button>
 
-        <h2 className="text-xl font-bold text-slate-800 mb-1">
-          Review {hotelName}
-        </h2>
+        <h2 className="text-xl font-bold text-slate-800 mb-1 pr-6">Review {flatTitle}</h2>
         <p className="text-xs text-slate-500 mb-4">
-          Share your experience with other travelers
+          Share your experience with other buyers
         </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,28 +79,22 @@ export default function ReviewModal({
                   onMouseLeave={() => setHover(0)}
                   className="p-1 text-amber-400 focus:outline-none"
                 >
-                  <Star
-                    size={28}
-                    fill={(hover || rating) >= star ? "currentColor" : "none"}
-                  />
+                  <Star size={28} fill={(hover || rating) >= star ? "currentColor" : "none"} />
                 </button>
               ))}
             </div>
-            <span className="text-xs font-semibold text-slate-600">
-              {rating} out of 5 Stars
-            </span>
+            <span className="text-xs font-semibold text-slate-600">{rating} out of 5 Stars</span>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">
-              Your Review
-            </label>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Your Review</label>
             <textarea
               required
               rows={4}
+              maxLength={1000}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="How was your stay? Tell us about the amenities, staff, and room..."
+              placeholder="How was the flat, the location, the building and the seller? Tell other buyers..."
               className="w-full text-sm p-3 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500"
             />
           </div>
