@@ -3,7 +3,6 @@
 import HeroBanner from "@/components/sections/HeroBanner";
 import FlatsSection from "@/components/sections/FlatsSection";
 import { Metadata } from "next";
-import Link from "next/link";
 import Script from "next/script";
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/seo";
 import {
@@ -14,7 +13,6 @@ import {
   PhoneCall,
   BadgePercent,
   Calculator,
-  ArrowRight,
 } from "lucide-react";
 import CustomerReviewsSection from "@/components/sections/CustomerReviewsSection";
 
@@ -152,24 +150,6 @@ export default function HomePage() {
 
           <section>
             <CustomerReviewsSection limit={6} title="What our customers say" />
-          </section>
-
-          {/* Seller CTA */}
-          <section className="bg-teal-600 rounded-3xl p-8 sm:p-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div className="text-center sm:text-left space-y-1">
-              <h2 className="text-xl sm:text-2xl font-extrabold text-white">
-                Selling a flat? List it with us
-              </h2>
-              <p className="text-xs sm:text-sm text-teal-50">
-                Reach serious buyers, manage booking requests and mark your flat as sold, all from one dashboard.
-              </p>
-            </div>
-            <Link
-              href="/contact"
-              className="shrink-0 inline-flex items-center gap-2 bg-white text-teal-700 font-bold text-sm px-6 py-3 rounded-xl hover:bg-teal-50 transition"
-            >
-              Become a seller <ArrowRight size={16} />
-            </Link>
           </section>
         </div>
       </div>
