@@ -4,7 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Page from "@/models/Page";
 import sanitizeHtml from "sanitize-html";
 import { Metadata } from "next";
-import { SITE_URL } from "@/lib/seo";
+import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import FaqAccordion from "@/components/FaqAccordion";
 import { cache } from "react";
 
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const title = pageData?.title || "Help Center";
   const description =
     pageData?.excerpt ||
-    "Learn more about LuxuryStays — your trusted platform for luxury hotels, boutique rooms, and premium accommodations.";
+    `Find answers to common questions about buying flats, booking site visits and selling on ${SITE_NAME}.`;
 
   return {
     title: title,
@@ -105,7 +105,7 @@ export default async function HelpCenterPage() {
             [&_ol]:text-sm [&_ol]:list-decimal [&_ol]:pl-6 [&_ol]:my-3 [&_ol]:space-y-2
             [&_li]:text-sm [&_li]:pl-1 [&_li]:mb-1 [&_li]:leading-relaxed
             [&_strong]:font-bold [&_strong]:text-slate-900
-            [&_a]:text-violet-700 [&_a]:font-semibold [&_a]:underline hover:[&_a]:text-violet-900
+            [&_a]:text-teal-700 [&_a]:font-semibold [&_a]:underline hover:[&_a]:text-teal-900
             [&_.ql-align-right]:text-right 
             [&_.ql-align-center]:text-center 
             [&_.ql-align-justify]:text-justify"

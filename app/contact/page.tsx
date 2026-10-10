@@ -26,7 +26,7 @@ const SUBJECTS = [
 ];
 
 const inputClass =
-  "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all";
+  "w-full px-4 py-3 rounded-xl border border-slate-200 bg-white text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-400 focus:border-transparent transition-all";
 
 export default function ContactPage() {
   const { data: session } = useSession();
@@ -56,9 +56,9 @@ export default function ContactPage() {
         const data = await res.json();
         if (data.success && data.settings) {
           setContactInfo({
-            email: data.settings.email || "support@luxurystays.com",
-            phone: data.settings.phone || "+1 (800) 123-4567",
-            address: data.settings.address || "123 Luxury Way, Suite 500, San Francisco, CA",
+            email: data.settings.email || "support@realestate.com",
+            phone: data.settings.phone || "+880 1234 567890",
+            address: data.settings.address || "Gulshan Avenue, Dhaka, Bangladesh",
           });
         }
       } catch (err) {
@@ -116,7 +116,7 @@ export default function ContactPage() {
     return (
       <main className="min-h-screen bg-slate-50 flex items-center justify-center px-2">
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-10 max-w-md w-full text-center">
-          <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-3xl mx-auto mb-5">
+          <div className="w-16 h-16 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center text-3xl mx-auto mb-5">
             ✅
           </div>
           <h2 className="text-2xl font-black text-slate-800 mb-2">
@@ -125,7 +125,7 @@ export default function ContactPage() {
           <p className="text-sm text-slate-500 mb-6 leading-relaxed">
             Thank you for reaching out, <span className="font-semibold text-slate-700">{form.name}</span>!
             We've received your message and will get back to you at{" "}
-            <span className="font-semibold text-emerald-600">{form.email}</span> shortly.
+            <span className="font-semibold text-teal-600">{form.email}</span> shortly.
           </p>
           <div className="flex flex-col gap-3">
             <button
@@ -158,14 +158,14 @@ export default function ContactPage() {
   return (
     <main className="min-h-screen py-10 max-w-7xl mx-auto px-2">
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
+        <div className="inline-flex items-center gap-2 bg-teal-50 border border-teal-100 text-teal-600 text-xs font-bold px-3 py-1.5 rounded-full mb-4">
           💬 Get in Touch
         </div>
         <h1 className="text-2xl sm:text-4xl font-black text-slate-800 tracking-tight mb-3">
           Contact Support
         </h1>
         <p className="text-slate-400 text-sm max-w-md mx-auto">
-          Have questions about your hotel reservation or need help? Send us a message and we'll reply within 24 hours.
+          Have a question about a flat, a booking or selling your property? Send us a message and we'll reply within 24 hours.
         </p>
       </div>
 
@@ -177,7 +177,7 @@ export default function ContactPage() {
               key={info.title}
               className="bg-white rounded-xl border border-slate-100 shadow-sm p-5 flex items-start gap-4"
             >
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-xl shrink-0">
+              <div className="w-10 h-10 rounded-xl bg-teal-50 border border-teal-100 flex items-center justify-center text-xl shrink-0">
                 {info.icon}
               </div>
               <div className="min-w-0 flex-1">
@@ -257,7 +257,7 @@ export default function ContactPage() {
                 name="message"
                 value={form.message}
                 onChange={handleChange}
-                placeholder="How can we help you with your booking?"
+                placeholder="How can we help you with your flat or booking?"
                 rows={5}
                 className={`${inputClass} resize-none`}
               />

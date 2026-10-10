@@ -5,8 +5,15 @@ import connectDB from "@/lib/mongodb";
 import Flat from "@/models/Flat";
 import { SITE_URL } from "@/lib/seo";
 
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = (SITE_URL || "").replace(/\/+$/, "");
+  if (!/^https:\/\//i.test(baseUrl) || /localhost|127\.0\.0\.1/.test(baseUrl)) {
+    console.warn(
+      `[Sitemap] SITE_URL is "${baseUrl}". Set NEXT_PUBLIC_SITE_URL to your live https:// domain in production.`,
+    );
+  }
 
   let flatUrls: MetadataRoute.Sitemap = [];
 
@@ -14,12 +21,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     await connectDB();
 
     // Fetch all flats
-    const flats = await Flat.find().select("_id updatedAt isSold").lean();
+    const flats = await Flat.find()
+      .select("_id updatedAt isSold")
+      .limit(45000)
+      .lean();
 
     flatUrls = flats.map((f: any) => ({
       url: `${baseUrl}/flats/${f._id}`,
       lastModified: f.updatedAt ? new Date(f.updatedAt) : new Date(),
-      // Sold flats stay reachable but are far less important to crawl
       changeFrequency: f.isSold ? "monthly" : "weekly",
       priority: f.isSold ? 0.3 : 0.8,
     }));
@@ -30,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Core static routes
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: baseUrl || "/",
+      url: `${baseUrl}/`,
       lastModified: new Date(),
       changeFrequency: "daily",
       priority: 1.0,
@@ -75,4 +84,3 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [...staticRoutes, ...flatUrls];
 }
-
