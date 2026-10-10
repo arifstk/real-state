@@ -116,7 +116,7 @@ export default function VendorDashboard() {
           </div>
           <div className="mt-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Earning (Month)</p>
-            <p className="text-lg font-bold text-slate-800 mt-1 tracking-tighter">${stats.monthlyRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-slate-800 mt-1">${stats.monthlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 
@@ -130,7 +130,7 @@ export default function VendorDashboard() {
           </div>
           <div className="mt-4">
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Earning (Year)</p>
-            <p className="text-lg font-bold text-slate-800 mt-1 tracking-tighter">${stats.yearlyRevenue.toLocaleString()}</p>
+            <p className="text-3xl font-bold text-slate-800 mt-1">${stats.yearlyRevenue.toLocaleString()}</p>
           </div>
         </div>
 

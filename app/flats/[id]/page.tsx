@@ -45,7 +45,7 @@ interface SingleFlatPageProps {
   params: Promise<{ id: string }>;
 }
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+const dollar = (n: number) => `$${Number(n || 0).toLocaleString("en-US")}`;
 
 /** Bangladeshi numbers: 017xxxxxxxx -> 88017xxxxxxxx (needed by wa.me) */
 const toWhatsAppNumber = (phone: string) => {
@@ -143,7 +143,7 @@ export async function generateMetadata({ params }: SingleFlatPageProps): Promise
     },
     other: {
       "product:price:amount": effectivePrice.toFixed(2),
-      "product:price:currency": "BDT",
+      "product:price:currency": "USD",
       "product:availability": flat.isAvailable ? "in stock" : "out of stock",
     },
   };
@@ -219,7 +219,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
     offers: {
       "@type": "Offer",
       url: canonicalUrl,
-      priceCurrency: "BDT",
+      priceCurrency: "USD",
       price: effectivePrice.toFixed(2),
       availability: flat.isAvailable
         ? "https://schema.org/InStock"
@@ -268,7 +268,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
     { label: "Property Type", value: flat.flatType || null },
     { label: "Purpose", value: "For Sale" },
     { label: "Total Area", value: flat.sizeSqFt ? `${flat.sizeSqFt} sq ft` : null },
-    { label: "Price / sq ft", value: pricePerSqFt ? formatBDT(pricePerSqFt) : null },
+    { label: "Price / sq ft", value: pricePerSqFt ? dollar(pricePerSqFt) : null },
     {
       label: "Floor",
       value: flat.floorNo ? `${flat.floorNo}${flat.totalFloors ? ` of ${flat.totalFloors}` : ""}` : null,
@@ -347,12 +347,12 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
 
                 <div className="flex flex-wrap items-baseline gap-3 mt-3">
                   <span className="text-3xl font-extrabold text-teal-600">
-                    {formatBDT(effectivePrice)}
+                    {dollar(effectivePrice)}
                   </span>
                   {hasDiscount && (
                     <>
                       <span className="text-sm text-slate-400 line-through">
-                        {formatBDT(flat.price)}
+                        {dollar(flat.price)}
                       </span>
                       <span className="text-xs font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">
                         {flat.discountPercent}% OFF
@@ -361,7 +361,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                   )}
                   {pricePerSqFt && (
                     <span className="text-xs text-slate-400">
-                      ≈ {formatBDT(pricePerSqFt)} / sq ft
+                      ≈ {dollar(pricePerSqFt)} / sq ft
                     </span>
                   )}
                 </div>
@@ -438,7 +438,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                       src={flat.floorPlan}
                       alt={`${flat.title} floor plan`}
                       loading="lazy"
-                      className="w-full max-h-120 object-contain"
+                      className="w-full max-h-[480px] object-contain"
                     />
                   </div>
                 </div>
@@ -468,9 +468,9 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                 <p className="text-[11px] text-slate-400 font-medium uppercase tracking-wide">
                   Sale Price
                 </p>
-                <p className="text-2xl font-extrabold text-teal-600">{formatBDT(effectivePrice)}</p>
+                <p className="text-2xl font-extrabold text-teal-600">{dollar(effectivePrice)}</p>
                 {pricePerSqFt && (
-                  <p className="text-xs text-slate-400">{formatBDT(pricePerSqFt)} per sq ft</p>
+                  <p className="text-xs text-slate-400">{dollar(pricePerSqFt)} per sq ft</p>
                 )}
                 <p className="flex items-center gap-1 text-[11px] text-slate-400 pt-1">
                   <Hash size={11} /> Listing ID: {listingId}
@@ -676,7 +676,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                       href={`/flats/${s._id}`}
                       className="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover:shadow-md transition"
                     >
-                      <div className="aspect-4/3 bg-slate-100 overflow-hidden">
+                      <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
                         {s.images?.[0] && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
@@ -692,7 +692,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                           {s.flatType}
                         </p>
                         <h4 className="text-sm font-bold text-slate-800 line-clamp-1">{s.title}</h4>
-                        <p className="text-base font-extrabold text-teal-600">{formatBDT(sPrice)}</p>
+                        <p className="text-base font-extrabold text-teal-600">{dollar(sPrice)}</p>
                         <p className="text-[11px] text-slate-400 flex items-center gap-3 pt-1">
                           <span className="flex items-center gap-1">
                             <BedDouble size={12} /> {s.bedrooms}

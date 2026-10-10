@@ -5,7 +5,7 @@ import Link from "next/link";
 import FlatReviewButton from "@/components/FlatReviewButton";
 import { MapPin, Calendar, Banknote, Phone, MessageCircle, MessageSquareText } from "lucide-react";
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+const dollar = (n: number) => `$${Number(n || 0).toLocaleString("en-US")}`;
 
 const toWhatsAppNumber = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
@@ -94,7 +94,7 @@ export default function FlatBookingItemCard({ booking }: { booking: any }) {
             <span className="text-slate-400 flex items-center gap-1 font-semibold text-[11px]">
               <Banknote size={13} /> Price
             </span>
-            <p className="font-extrabold text-slate-800 text-sm">{formatBDT(booking.totalPrice)}</p>
+            <p className="font-extrabold text-slate-800 text-sm">{dollar(booking.totalPrice)}</p>
           </div>
 
           <div className="space-y-0.5">

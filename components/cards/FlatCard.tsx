@@ -41,13 +41,15 @@ export default function FlatCard({
     <div className="bg-white rounded-2xl overflow-hidden border border-slate-200/80 shadow-2xs group flex flex-col justify-between">
       <div>
         <div className="relative h-48 w-full overflow-hidden bg-slate-100">
+          <Link href={`/flats/${id}`}>
             <Image
               src={images[0] || "/placeholder-flat.jpg"}
               alt={flatType}
               fill
-              className={`object-cover transition duration-300 ${isSold ? "grayscale opacity-80" : ""
+              className={`object-cover group-hover:scale-105 transition duration-300 ${isSold ? "grayscale opacity-80" : ""
                 }`}
             />
+          </Link>
 
           {/* SOLD overlay */}
           {isSold && (
@@ -105,13 +107,13 @@ export default function FlatCard({
       <div className="px-4 pb-4 pt-3 flex items-center justify-between border-t border-slate-100 mt-3">
         <div>
           {!isSold && discountPercent > 0 && (
-            <span className="text-xs text-slate-400 line-through block">৳{price}</span>
+            <span className="text-xs text-slate-400 line-through block">${price}</span>
           )}
           <span
             className={`text-lg font-extrabold ${isSold ? "text-slate-400 line-through" : "text-slate-800"
               }`}
           >
-            ৳{effectivePrice}
+            ${effectivePrice}
           </span>
         </div>
 

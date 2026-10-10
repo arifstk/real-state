@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Calculator } from "lucide-react";
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+const dollar = (n: number) => `$${Number(n || 0).toLocaleString("en-US")}`;
 
 interface SliderProps {
   label: string;
@@ -15,6 +15,7 @@ interface SliderProps {
   onChange: (v: number) => void;
 }
 
+// Defined at module level (NOT inside FlatEmiCalculator) so it isn't re-created on every render
 function Slider({ label, value, min, max, step, suffix, onChange }: SliderProps) {
   return (
     <div className="space-y-1.5">
@@ -66,7 +67,7 @@ export default function FlatEmiCalculator({ price }: { price: number }) {
 
       <div className="bg-teal-50 rounded-xl p-4 text-center">
         <p className="text-[11px] text-teal-700 font-medium">Estimated monthly EMI</p>
-        <p className="text-2xl font-extrabold text-teal-700">{formatBDT(emi)}</p>
+        <p className="text-2xl font-extrabold text-teal-700">{dollar(emi)}</p>
       </div>
 
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -77,7 +78,7 @@ export default function FlatEmiCalculator({ price }: { price: number }) {
         ].map(({ l, v }) => (
           <div key={l} className="bg-slate-50 rounded-lg p-2">
             <p className="text-[10px] text-slate-400">{l}</p>
-            <p className="text-[11px] font-bold text-slate-800">{formatBDT(v)}</p>
+            <p className="text-[11px] font-bold text-slate-800">{dollar(v)}</p>
           </div>
         ))}
       </div>

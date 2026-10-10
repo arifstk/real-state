@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import toast from "react-hot-toast";
-import { Pencil, Trash2, Home } from "lucide-react";
+import { Pencil, Trash2, Home, RotateCcw } from "lucide-react";
 
 type Flat = {
   _id: string;
@@ -19,12 +19,14 @@ type Flat = {
   sizeSqFt: number;
   images: string[];
   isAvailable: boolean;
+  isSold?: boolean;
 };
 
 export default function VendorFlatsPage() {
   const router = useRouter();
   const [flats, setFlats] = useState<Flat[]>([]);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<string | null>(null);
 
   const loadFlats = async () => {
     setLoading(true);
@@ -81,6 +83,31 @@ export default function VendorFlatsPage() {
     }
   };
 
+  const handleReopen = async (flat: Flat) => {
+    if (
+      !confirm(
+        `Reopen "${flat.title}" for sale?\n\nThe SOLD label will be removed and the earlier completed deal will be cancelled, so it no longer counts in your sales and earnings.`,
+      )
+    )
+      return;
+
+    setBusyId(flat._id);
+    try {
+      const res = await fetch(`/api/vendor/flats/${flat._id}/reopen`, { method: "PATCH" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to reopen flat");
+
+      toast.success("Flat reopened for sale");
+      setFlats((prev) =>
+        prev.map((f) => (f._id === flat._id ? { ...f, isSold: false, isAvailable: true } : f)),
+      );
+    } catch (err: any) {
+      toast.error(err.message || "Server error");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
   if (loading) return <div className="text-slate-500 p-6">Loading flats...</div>;
 
   return (
@@ -111,7 +138,7 @@ export default function VendorFlatsPage() {
             >
               <div className="w-20 h-20 rounded-lg bg-slate-100 relative shrink-0 overflow-hidden">
                 {flat.images?.[0] ? (
-                  <Image src={flat.images[0]} alt={flat.title} fill className="object-cover" />
+                  <Image src={flat.images[0]} alt={flat.title} fill className={`object-cover ${flat.isSold ? "grayscale" : ""}`} />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-slate-400">
                     <Home size={24} />
@@ -121,19 +148,33 @@ export default function VendorFlatsPage() {
 
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-slate-800 truncate">{flat.title}</h3>
-                <p className="text-sm text-teal-600 font-medium">৳{flat.price.toLocaleString()} BDT</p>
+                <p className="text-sm text-teal-600 font-medium">${flat.price.toLocaleString()}</p>
                 <p className="text-xs text-slate-400 mt-0.5 truncate">
                   {flat.bedrooms} Beds • {flat.bathrooms} Baths • {flat.sizeSqFt} sqft • {flat.city}
                 </p>
                 <span
-                  className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${flat.isAvailable ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+                  className={`inline-block mt-1 text-xs font-medium px-2 py-0.5 rounded-full ${flat.isSold
+                      ? "bg-rose-50 text-rose-700"
+                      : flat.isAvailable
+                        ? "bg-green-50 text-green-700"
+                        : "bg-slate-100 text-slate-600"
                     }`}
                 >
-                  {flat.isAvailable ? "Available" : "Sold/Unavailable"}
+                  {flat.isSold ? "Sold" : flat.isAvailable ? "Available" : "Unavailable"}
                 </span>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
+                {flat.isSold && (
+                  <button
+                    onClick={() => handleReopen(flat)}
+                    disabled={busyId === flat._id}
+                    className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200 text-slate-700 text-xs font-semibold hover:bg-slate-50 transition cursor-pointer disabled:opacity-50"
+                    title="Reopen for sale"
+                  >
+                    <RotateCcw size={14} /> Reopen
+                  </button>
+                )}
                 <button
                   onClick={() => router.push(`/vendor-dashboard/flats/edit/${flat._id}`)}
                   className="p-2 rounded-lg border border-slate-200 text-teal-600 hover:bg-teal-50 transition cursor-pointer"

@@ -43,7 +43,7 @@ interface Flat {
 
 type Filter = "all" | "available" | "sold";
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+const dollar = (n: number) => `$${Number(n || 0).toLocaleString("en-US")}`;
 
 const effectivePrice = (f: Flat) =>
   f.discountPercent ? f.price * (1 - f.discountPercent / 100) : f.price;
@@ -281,10 +281,10 @@ export default function AdminFlatsView() {
                   {/* Price */}
                   <div className="flex items-baseline gap-2">
                     <span className="text-lg font-extrabold text-slate-800">
-                      {formatBDT(effectivePrice(flat))}
+                      {dollar(effectivePrice(flat))}
                     </span>
                     {!!flat.discountPercent && (
-                      <span className="text-xs text-slate-400 line-through">{formatBDT(flat.price)}</span>
+                      <span className="text-xs text-slate-400 line-through">{dollar(flat.price)}</span>
                     )}
                   </div>
 

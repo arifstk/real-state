@@ -22,7 +22,7 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+const dollar = (n: number) => `$${Number(n || 0).toLocaleString("en-US")}`;
 
 const toWhatsAppNumber = (phone: string) => {
   const digits = phone.replace(/\D/g, "");
@@ -193,7 +193,7 @@ export default async function VendorBookingsPage() {
                         <Banknote size={13} /> Listing Price
                       </span>
                       <p className="font-extrabold text-slate-800 text-sm">
-                        {formatBDT(booking.totalPrice)}
+                        {dollar(booking.totalPrice)}
                       </p>
                     </div>
 
