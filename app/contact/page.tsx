@@ -133,7 +133,7 @@ export default function ContactPage() {
                 setSubmitted(false);
                 setForm({ name: "", email: "", subject: "", message: "" });
               }}
-              className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold transition-all cursor-pointer"
+              className="w-full py-2.5 rounded-xl btn-primary text-white text-sm font-bold transition-all cursor-pointer"
             >
               Send Another Message
             </button>
@@ -266,7 +266,7 @@ export default function ContactPage() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full py-3.5 rounded-xl btn-primary text-white font-bold text-sm transition-all disabled:opacity-50 cursor-pointer"
             >
               {loading ? "Sending..." : "Send Message 📨"}
             </button>
