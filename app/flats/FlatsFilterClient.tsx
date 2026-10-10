@@ -43,7 +43,7 @@ interface FlatsFilterClientProps {
   initialFlats: FlatListItem[];
 }
 
-const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
+// const formatBDT = (n: number) => `৳${Math.round(n).toLocaleString("en-BD")}`;
 
 const getEffectivePrice = (flat: FlatListItem) =>
   flat.discountPercent
@@ -275,7 +275,8 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-semibold text-slate-600">
                 <span>Max Price</span>
-                <span className="text-teal-600 font-bold">{formatBDT(maxPrice)}</span>
+                {/* <span className="text-teal-600 font-bold">{formatBDT(maxPrice)}</span> */}
+                <span className="text-teal-600 font-bold">${maxPrice.toLocaleString()}</span>
               </div>
               <input
                 type="range"

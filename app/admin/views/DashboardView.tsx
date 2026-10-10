@@ -112,6 +112,7 @@ export default function AdminDashboardView() {
         </p>
       </div>
 
+      {/* Stat Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5">
         {cards.map((card) => {
           const Icon = card.icon;
@@ -120,12 +121,12 @@ export default function AdminDashboardView() {
               key={card.label}
               className="bg-white p-5 rounded-2xl border border-slate-100 shadow-2xs flex items-center gap-4"
             >
-              <div className={`p-3.5 rounded-xl ${card.color}`}>
-                <Icon size={22} />
+              <div className={`p-2.5 rounded-xl ${card.color}`}>
+                <Icon size={20} />
               </div>
               <div className="min-w-0">
                 <p className="text-xs font-medium text-slate-500">{card.label}</p>
-                <h3 className="text-2xl font-extrabold text-slate-800 mt-0.5 truncate">{card.count}</h3>
+                <h3 className="text-lg font-extrabold text-slate-800 mt-0.5 tracking-tighter truncate">{card.count}</h3>
               </div>
             </div>
           );
