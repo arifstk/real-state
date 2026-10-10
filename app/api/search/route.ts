@@ -2,67 +2,59 @@
 
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
-import Room from "@/models/Flat";
-import Hotel from "@/models/Property";
+import Flat from "@/models/Flat";
+
+// Escape user input so characters like ( or * can't break the regex
+const escapeRegex = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const query = searchParams.get("q");
+    const query = searchParams.get("q")?.trim();
 
-    if (!query || !query.trim()) {
+    if (!query) {
       return NextResponse.json({ success: true, results: [] });
     }
 
     await connectDB();
-    const regex = new RegExp(query, "i");
+    const regex = new RegExp(escapeRegex(query.slice(0, 80)), "i");
 
-    // Search Hotels matching name, city, or location
-    const matchingHotels = await Hotel.find({
-      $or: [{ name: regex }, { city: regex }, { location: regex }],
-    })
-      .select("_id name city")
-      .limit(6)
-      .lean();
-
-    const hotelIds = matchingHotels.map((h: any) => h._id);
-
-    // Search Rooms matching roomType, amenities, OR belonging to matching hotels
-    const rooms = await Room.find({
+    // Search flats by title, type, city, address or amenities
+    const flats: any[] = await Flat.find({
       $or: [
-        { roomType: regex },
+        { title: regex },
+        { flatType: regex },
+        { city: regex },
+        { address: regex },
         { amenities: regex },
-        { hotel: { $in: hotelIds } },
       ],
     })
-      .populate("hotel", "name city")
+      .select("_id title flatType city address price discountPercent isSold")
+      .sort({ isSold: 1, createdAt: -1 }) // flats still for sale first
       .limit(6)
       .lean();
 
-    // Format room results
-    const roomResults = rooms.map((room: any) => ({
-      _id: room._id.toString(),
-      title: room.roomType || "Standard Room",
-      subtitle: room.hotel?.name
-        ? `${room.hotel.name}${room.hotel.city ? `, ${room.hotel.city}` : ""}`
-        : "Hotel Stay",
-      type: "room",
-      price: room.pricePerNight,
-    }));
+    const results = flats.map((flat) => {
+      const price = flat.discountPercent
+        ? Math.round(flat.price * (1 - flat.discountPercent / 100))
+        : flat.price;
 
-    // Format direct hotel results (if no rooms matched directly)
-    const hotelResults = matchingHotels.map((hotel: any) => ({
-      _id: hotel._id.toString(),
-      title: hotel.name,
-      subtitle: hotel.city || "Hotel",
-      type: "hotel",
-      price: undefined,
-    }));
+      return {
+        _id: flat._id.toString(),
+        title: flat.title,
+        subtitle: [
+          flat.flatType,
+          [flat.address, flat.city].filter(Boolean).join(", "),
+        ]
+          .filter(Boolean)
+          .join(" · "),
+        type: "flat",
+        price,
+        isSold: !!flat.isSold,
+      };
+    });
 
-    // Combine and deduplicate top results
-    const combinedResults = [...roomResults, ...hotelResults].slice(0, 6);
-
-    return NextResponse.json({ success: true, results: combinedResults });
+    return NextResponse.json({ success: true, results });
   } catch (error) {
     console.error("Search API Error:", error);
     return NextResponse.json(

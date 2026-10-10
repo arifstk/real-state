@@ -438,7 +438,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                       src={flat.floorPlan}
                       alt={`${flat.title} floor plan`}
                       loading="lazy"
-                      className="w-full max-h-[480px] object-contain"
+                      className="w-full max-h-120 object-contain"
                     />
                   </div>
                 </div>
@@ -676,7 +676,7 @@ export default async function SingleFlatPage({ params }: SingleFlatPageProps) {
                       href={`/flats/${s._id}`}
                       className="group bg-white rounded-2xl border border-slate-200/80 overflow-hidden hover:shadow-md transition"
                     >
-                      <div className="aspect-[4/3] bg-slate-100 overflow-hidden">
+                      <div className="aspect-4/3 bg-slate-100 overflow-hidden">
                         {s.images?.[0] && (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img

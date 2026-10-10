@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Loader2, BedDouble } from "lucide-react";
+import { Search, Loader2, Home } from "lucide-react";
 
 export interface SearchResult {
   _id: string;
@@ -12,6 +12,7 @@ export interface SearchResult {
   subtitle: string;
   type?: string;
   price?: number;
+  isSold?: boolean;
 }
 
 export default function HeaderSearchBar() {
@@ -65,8 +66,8 @@ export default function HeaderSearchBar() {
   const handleSelect = (item: SearchResult) => {
     setIsOpen(false);
     setQuery("");
-    // Navigates directly to the selected room's detail page
-    router.push(`/rooms/${item._id}`);
+    // Navigates directly to the selected flat's detail page
+    router.push(`/flats/${item._id}`);
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -77,8 +78,8 @@ export default function HeaderSearchBar() {
       handleSelect(results[selectedIndex]);
     } else {
       setIsOpen(false);
-      // Fallback navigation to the rooms listing page with filter state
-      router.push(`/rooms?search=${encodeURIComponent(query)}`);
+      // Fallback navigation to the flats listing page with the search keyword
+      router.push(`/flats?search=${encodeURIComponent(query)}`);
     }
   };
 
@@ -99,7 +100,8 @@ export default function HeaderSearchBar() {
   // Highlights matching user text input
   const renderHighlightedText = (text: string, highlight: string) => {
     if (!highlight.trim()) return text;
-    const parts = text.split(new RegExp(`(${highlight})`, "gi"));
+    const escaped = highlight.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const parts = text.split(new RegExp(`(${escaped})`, "gi"));
     return (
       <span>
         {parts.map((part, index) =>
@@ -131,7 +133,7 @@ export default function HeaderSearchBar() {
           }}
           onFocus={() => query.trim() && setIsOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search rooms, hotels, or cities..."
+          placeholder="Search flats, areas, or cities..."
           className="w-full bg-slate-50 border border-slate-200 rounded-xl text-xs pl-10 pr-10 py-2.5 text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-teal-500 focus:bg-white transition-all shadow-2xs"
         />
         {loading && (
@@ -145,7 +147,7 @@ export default function HeaderSearchBar() {
           {results.length > 0 ? (
             <div>
               <div className="px-3.5 py-1 text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                Rooms & Stays
+                Flats for Sale
               </div>
               {results.map((item, index) => {
                 const isSelected = index === selectedIndex;
@@ -159,7 +161,7 @@ export default function HeaderSearchBar() {
                   >
                     <div className="flex items-center gap-3 truncate">
                       <div className="p-1.5 rounded-lg bg-slate-100 text-slate-500 shrink-0">
-                        <BedDouble size={14} />
+                        <Home size={14} />
                       </div>
                       <div className="truncate">
                         <div className="text-xs">{renderHighlightedText(item.title, query)}</div>
@@ -167,10 +169,16 @@ export default function HeaderSearchBar() {
                       </div>
                     </div>
 
-                    {item.price && (
-                      <span className="text-xs font-bold text-teal-600 shrink-0 ml-2">
-                        ${item.price}
+                    {item.isSold ? (
+                      <span className="text-[10px] font-extrabold text-rose-600 bg-rose-50 px-2 py-0.5 rounded shrink-0 ml-2">
+                        SOLD
                       </span>
+                    ) : (
+                      item.price !== undefined && (
+                        <span className="text-xs font-bold text-teal-600 shrink-0 ml-2">
+                          ${item.price.toLocaleString()}
+                        </span>
+                      )
                     )}
                   </div>
                 );
@@ -178,7 +186,7 @@ export default function HeaderSearchBar() {
             </div>
           ) : (
             <div className="px-4 py-4 text-xs text-slate-400 text-center font-medium">
-              No rooms or hotels found for "{query}"
+              No flats found for &quot;{query}&quot;
             </div>
           )}
         </div>
