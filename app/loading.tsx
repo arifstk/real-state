@@ -8,9 +8,9 @@ export default function GlobalLoading() {
         {/* Animated Brand Glow & Spinner */}
         <div className="relative flex items-center justify-center w-16 h-16">
           <div className="absolute inset-0 rounded-full border-2 border-slate-100" />
-          <div className="absolute inset-0 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-          <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-600 animate-pulse" />
+          <div className="absolute inset-0 rounded-full border-2 border-green-500 border-t-transparent animate-spin" />
+          <div className="w-8 h-8 rounded-full bg-green-50 flex items-center justify-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse" />
           </div>
         </div>
 
@@ -27,7 +27,7 @@ export default function GlobalLoading() {
         {/* Skeleton Indicator */}
         <div className="w-full space-y-2 pt-2">
           <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-            <div className="h-full bg-emerald-500 rounded-full w-2/5 animate-[pulse_1.2s_ease-in-out_infinite]" />
+            <div className="h-full bg-green-500 rounded-full w-2/5 animate-[pulse_1.2s_ease-in-out_infinite]" />
           </div>
         </div>
 
