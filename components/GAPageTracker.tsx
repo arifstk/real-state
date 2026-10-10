@@ -4,7 +4,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
-const GA_MEASUREMENT_ID = "G-PQ6ZE636DW";
+const GA_MEASUREMENT_ID = "G-8TTY7S7SSW";
 export default function GAPageTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();

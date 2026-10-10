@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     images: [`${SITE_URL}/og-image.jpg?t=${Date.now()}`],
   },
   verification: {
-    google: "btnaOk_cok44sK_BnN1Pz-trMY2KiXzEYTLT4L0Uyl8",
+    google: "FcspxoAHI7m6K2Oa7Smzvfgn-j2Bek36aDnLVf3exF8",
   },
   other: {
     "og:updated_time": new Date().toISOString(),
@@ -103,7 +103,7 @@ export default function RootLayout({
         {/* Google Verification */}
         <meta
           name="google-site-verification"
-          content="btnaOk_cok44sK_BnN1Pz-trMY2KiXzEYTLT4L0Uyl8"
+          content="FcspxoAHI7m6K2Oa7Smzvfgn-j2Bek36aDnLVf3exF8"
         />
       </head>
       <body className={`${poppins.className}`}>
