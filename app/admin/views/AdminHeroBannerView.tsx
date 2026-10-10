@@ -1,234 +1,58 @@
-
-// "use client";
-
-// import { useEffect, useState } from "react";
-// import { Save, Upload } from "lucide-react";
-// import Image from "next/image";
-
-// export default function AdminHeroBannerView() {
-//   const [loading, setLoading] = useState(true);
-//   const [saving, setSaving] = useState(false);
-//   const [uploading, setUploading] = useState(false);
-//   const [formData, setFormData] = useState({
-//     badgeText: "",
-//     headingText: "",
-//     highlightText: "",
-//     subtitleText: "",
-//     imageUrl: "",
-//     roomsBtnText: "",
-//     hotelsBtnText: "",
-//     metricBadgeText: "",
-//   });
-
-//   useEffect(() => {
-//     fetch("/api/admin/hero-banner")
-//       .then((res) => res.json())
-//       .then((data) => {
-//         if (data.success && data.banner) {
-//           setFormData(data.banner);
-//         }
-//       })
-//       .finally(() => setLoading(false));
-//   }, []);
-
-//   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-//     const file = e.target.files?.[0];
-//     if (!file) return;
-
-//     setUploading(true);
-//     const uploadData = new FormData();
-//     uploadData.append("file", file);
-
-//     try {
-//       const res = await fetch("/api/admin/hero-banner", {
-//         method: "POST",
-//         body: uploadData,
-//       });
-//       const data = await res.json();
-//       if (data.success) {
-//         setFormData((prev) => ({ ...prev, imageUrl: data.url }));
-//       } else {
-//         alert(data.message || "Failed to upload file");
-//       }
-//     } catch (err) {
-//       alert("Error uploading image");
-//     } finally {
-//       setUploading(false);
-//     }
-//   };
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     setSaving(true);
-//     try {
-//       const res = await fetch("/api/admin/hero-banner", {
-//         method: "PUT",
-//         headers: { "Content-Type": "application/json" },
-//         body: JSON.stringify(formData),
-//       });
-//       if (res.ok) alert("Hero banner saved successfully!");
-//     } catch (err) {
-//       alert("Failed to update banner.");
-//     } finally {
-//       setSaving(false);
-//     }
-//   };
-
-//   if (loading) return <p className="text-sm text-slate-400">Loading banner settings...</p>;
-
-//   return (
-//     <div className="max-w-4xl space-y-6">
-//       <div>
-//         <h2 className="text-xl font-bold text-slate-800">Hero Banner Management</h2>
-//         <p className="text-xs text-slate-500 mt-1">
-//           Upload banner image and customize homepage texts. Total stays and ratings calculate automatically.
-//         </p>
-//       </div>
-
-//       <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
-//         {/* Banner Image Upload */}
-//         <div>
-//           <label className="block text-xs font-semibold text-slate-700 mb-2">Banner Background Image</label>
-//           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-//             {formData.imageUrl && (
-//               <div className="relative w-40 h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-//                 <Image
-//                   src={formData.imageUrl}
-//                   alt="Hero Preview"
-//                   fill
-//                   className="object-cover"
-//                 />
-//               </div>
-//             )}
-//             <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition">
-//               <Upload size={16} />
-//               {uploading ? "Uploading to Cloudinary..." : "Upload New Image"}
-//               <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
-//             </label>
-//           </div>
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Badge Text</label>
-//             <input
-//               type="text"
-//               value={formData.badgeText}
-//               onChange={(e) => setFormData({ ...formData, badgeText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Verified Badge Subtitle</label>
-//             <input
-//               type="text"
-//               value={formData.metricBadgeText}
-//               onChange={(e) => setFormData({ ...formData, metricBadgeText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Main Heading</label>
-//             <input
-//               type="text"
-//               value={formData.headingText}
-//               onChange={(e) => setFormData({ ...formData, headingText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Highlighted Word</label>
-//             <input
-//               type="text"
-//               value={formData.highlightText}
-//               onChange={(e) => setFormData({ ...formData, highlightText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-//         </div>
-
-//         <div>
-//           <label className="block text-xs font-semibold text-slate-700 mb-1">Subtitle Description</label>
-//           <textarea
-//             rows={3}
-//             value={formData.subtitleText}
-//             onChange={(e) => setFormData({ ...formData, subtitleText: e.target.value })}
-//             className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//           />
-//         </div>
-
-//         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Rooms CTA Button Text</label>
-//             <input
-//               type="text"
-//               value={formData.roomsBtnText}
-//               onChange={(e) => setFormData({ ...formData, roomsBtnText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-
-//           <div>
-//             <label className="block text-xs font-semibold text-slate-700 mb-1">Hotels CTA Button Text</label>
-//             <input
-//               type="text"
-//               value={formData.hotelsBtnText}
-//               onChange={(e) => setFormData({ ...formData, hotelsBtnText: e.target.value })}
-//               className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-//             />
-//           </div>
-//         </div>
-
-//         <button
-//           type="submit"
-//           disabled={saving || uploading}
-//           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition cursor-pointer"
-//         >
-//           <Save size={16} />
-//           {saving ? "Saving Changes..." : "Save Banner Settings"}
-//         </button>
-//       </form>
-//     </div>
-//   );
-// }
-
-
-
+// app/admin/views/AdminHeroBannerView.tsx
 
 "use client";
 
 import { useEffect, useState } from "react";
 import { Save, Upload } from "lucide-react";
 import Image from "next/image";
+import toast from "react-hot-toast";
+
+const EMPTY_FORM = {
+  badgeText: "",
+  headingText: "",
+  highlightText: "",
+  subtitleText: "",
+  metricBadgeText: "",
+  imageUrl: "",
+};
+
+type FormData = typeof EMPTY_FORM;
+
+const inputCls =
+  "w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500";
+const labelCls = "block text-xs font-semibold text-slate-700 mb-1";
+const hintCls = "text-[11px] text-slate-400 mt-1";
 
 export default function AdminHeroBannerView() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [formData, setFormData] = useState({
-    badgeText: "",
-    headingText: "",
-    highlightText: "",
-    subtitleText: "",
-    imageUrl: "",
-    roomsBtnText: "",
-    hotelsBtnText: "",
-    metricBadgeText: "",
-  });
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM);
 
   useEffect(() => {
     fetch("/api/admin/hero-banner")
       .then((res) => res.json())
       .then((data) => {
         if (data.success && data.banner) {
-          setFormData(data.banner);
+          const b = data.banner;
+          setFormData({
+            badgeText: b.badgeText || "",
+            headingText: b.headingText || "",
+            highlightText: b.highlightText || "",
+            subtitleText: b.subtitleText || "",
+            metricBadgeText: b.metricBadgeText || "",
+            imageUrl: b.imageUrl || "",
+          });
+        } else {
+          toast.error(data.message || "Failed to load banner settings");
         }
       })
+      .catch(() => toast.error("Failed to load banner settings"))
       .finally(() => setLoading(false));
   }, []);
+
+  const set = (key: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+    setFormData((prev) => ({ ...prev, [key]: e.target.value }));
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -239,20 +63,19 @@ export default function AdminHeroBannerView() {
     uploadData.append("file", file);
 
     try {
-      const res = await fetch("/api/admin/hero-banner", {
-        method: "POST",
-        body: uploadData,
-      });
+      const res = await fetch("/api/admin/hero-banner", { method: "POST", body: uploadData });
       const data = await res.json();
       if (data.success) {
         setFormData((prev) => ({ ...prev, imageUrl: data.url }));
+        toast.success("Image uploaded. Click Save to publish it.");
       } else {
-        alert(data.message || "Failed to upload file");
+        toast.error(data.message || "Failed to upload file");
       }
     } catch {
-      alert("Error uploading image");
+      toast.error("Error uploading image");
     } finally {
       setUploading(false);
+      e.target.value = ""; // allow picking the same file again
     }
   };
 
@@ -265,9 +88,14 @@ export default function AdminHeroBannerView() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      if (res.ok) alert("Hero banner saved successfully!");
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        toast.success("Hero banner saved successfully!");
+      } else {
+        toast.error(data.message || "Failed to update banner.");
+      }
     } catch {
-      alert("Failed to update banner.");
+      toast.error("Failed to update banner.");
     } finally {
       setSaving(false);
     }
@@ -280,13 +108,15 @@ export default function AdminHeroBannerView() {
       <div>
         <h2 className="text-xl font-bold text-slate-800">Hero Banner Management</h2>
         <p className="text-xs text-slate-500 mt-1">
-          Upload banner image and customize homepage texts for your real estate platform.
+          Edit the homepage hero. Flat count and user rating in the bottom row are calculated
+          automatically. Empty fields show the default text.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4">
+      <form onSubmit={handleSubmit} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-5">
+        {/* Image */}
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-2">Banner Background Image</label>
+          <label className={labelCls}>Banner Image</label>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {formData.imageUrl && (
               <div className="relative w-40 h-24 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
@@ -296,89 +126,105 @@ export default function AdminHeroBannerView() {
             <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold cursor-pointer transition">
               <Upload size={16} />
               {uploading ? "Uploading to Cloudinary..." : "Upload New Image"}
-              <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploading}
+                className="hidden"
+              />
             </label>
           </div>
+          <p className={hintCls}>
+            Shown on the right side of the hero with a curved edge. Use a landscape photo of a
+            building or home (max 5 MB).
+          </p>
         </div>
 
+        {/* Texts */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Badge Text</label>
+            <label className={labelCls}>Top Label</label>
             <input
               type="text"
+              maxLength={80}
               value={formData.badgeText}
-              onChange={(e) => setFormData({ ...formData, badgeText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
+              onChange={set("badgeText")}
+              placeholder="PREMIUM REAL ESTATE SOLUTIONS"
+              className={inputCls}
             />
+            <p className={hintCls}>Small capital text above the heading.</p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Verified Badge Subtitle</label>
+            <label className={labelCls}>Verified Feature Title</label>
             <input
               type="text"
+              maxLength={80}
               value={formData.metricBadgeText}
-              onChange={(e) => setFormData({ ...formData, metricBadgeText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
+              onChange={set("metricBadgeText")}
+              placeholder="Verified Listings"
+              className={inputCls}
             />
+            <p className={hintCls}>First item in the row of four under the hero.</p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Main Heading</label>
+            <label className={labelCls}>Main Heading</label>
             <input
               type="text"
+              maxLength={80}
               value={formData.headingText}
-              onChange={(e) => setFormData({ ...formData, headingText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
+              onChange={set("headingText")}
+              placeholder="Find Your Dream Property"
+              className={inputCls}
             />
+            <p className={hintCls}>Dark heading text.</p>
           </div>
 
           <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Highlighted Word</label>
+            <label className={labelCls}>Highlighted Line</label>
             <input
               type="text"
+              maxLength={60}
               value={formData.highlightText}
-              onChange={(e) => setFormData({ ...formData, highlightText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
+              onChange={set("highlightText")}
+              placeholder="in Maryland"
+              className={inputCls}
             />
+            <p className={hintCls}>Shown in gold on its own line below the heading.</p>
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-700 mb-1">Subtitle Description</label>
+          <label className={labelCls}>Subtitle Description</label>
           <textarea
             rows={3}
+            maxLength={300}
             value={formData.subtitleText}
-            onChange={(e) => setFormData({ ...formData, subtitleText: e.target.value })}
-            className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
+            onChange={set("subtitleText")}
+            placeholder="Modern homes. Prime locations. Trusted guidance."
+            className={inputCls}
           />
+          <p className={hintCls}>{formData.subtitleText.length}/300</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Flats CTA Button Text</label>
-            <input
-              type="text"
-              value={formData.roomsBtnText}
-              onChange={(e) => setFormData({ ...formData, roomsBtnText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-slate-700 mb-1">Properties CTA Button Text</label>
-            <input
-              type="text"
-              value={formData.hotelsBtnText}
-              onChange={(e) => setFormData({ ...formData, hotelsBtnText: e.target.value })}
-              className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-teal-500"
-            />
-          </div>
+        {/* Live text preview */}
+        <div className="rounded-xl bg-slate-50 border border-slate-100 p-4">
+          <p className="text-[10px] font-bold tracking-[0.2em] text-[#b8903a] uppercase">
+            {formData.badgeText || "Top label"}
+          </p>
+          <p className="mt-1 text-xl font-extrabold text-[#17382f] leading-tight">
+            {formData.headingText || "Main heading"}
+            <span className="block text-[#b8903a]">{formData.highlightText || "Highlighted line"}</span>
+          </p>
+          <p className="mt-1 text-xs text-slate-500">{formData.subtitleText || "Subtitle description"}</p>
         </div>
 
         <button
           type="submit"
           disabled={saving || uploading}
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition cursor-pointer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold transition cursor-pointer disabled:opacity-60"
         >
           <Save size={16} />
           {saving ? "Saving Changes..." : "Save Banner Settings"}

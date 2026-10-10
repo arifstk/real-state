@@ -1,7 +1,7 @@
+// components/sections/HeroBanner.tsx
 
-import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, ShieldCheck, MapPin, Star } from "lucide-react";
+import { ShieldCheck, Star, Building2, Users } from "lucide-react";
 import connectDB from "@/lib/mongodb";
 import HeroBannerModel from "@/models/HeroBanner";
 import Room from "@/models/Flat";
@@ -65,62 +65,72 @@ export default async function HeroBanner() {
   const hotelsBtnText = bannerData?.hotelsBtnText || "Browse Hotels";
   const metricBadgeText = bannerData?.metricBadgeText || "100% Verified Bookings";
 
+  const features = [
+    { icon: ShieldCheck, title: metricBadgeText, desc: "Only genuine & trusted properties" },
+    { icon: Building2, title: `${totalStaysCount}+ Flats Listed`, desc: "Homes across the country" },
+    { icon: Star, title: `${averageRatingFormatted} User Rating`, desc: "Rated by real buyers" },
+    { icon: Users, title: "Expert Guidance", desc: "Professional support at every step" },
+  ];
+
   return (
-    <section className="relative w-full h-screen md:h-auto -top-4 md:-top-10 bg-slate-500 text-white overflow-hidden md:rounded-3xl">
-      {/* Background Image */}
-      <div className="absolute inset-0 z-0 opacity-90">
-        <Image
-          src={imageUrl}
-          alt="Luxury Hotel Hero"
-          fill
-          priority
-          className="object-cover"
-        />
-        <div className="absolute inset-0 bg-linear-to-r from-black/90 via-black-800/80 to-transparent" />
+    <section className="relative w-full -top-4 md:-top-10 bg-white sm:border sm:border-slate-200/80 sm:shadow-sm overflow-hidden md:rounded-3xl">
+      {/* Curved edge for the image (shape only, renders nothing by itself) */}
+      <svg width="0" height="0" className="absolute" aria-hidden="true">
+        <defs>
+          <clipPath id="hero-curve" clipPathUnits="objectBoundingBox">
+            <path d="M0.2,0 C0,0.25 0.22,0.5 0.12,0.72 C0.07,0.86 0.1,0.95 0.04,1 L1,1 L1,0 Z" />
+          </clipPath>
+        </defs>
+      </svg>
+
+      {/* Top: text on the left, image on the right (same layout on mobile and desktop) */}
+      <div className="relative flex items-center min-h-55 sm:min-h-90 lg:min-h-100">
+        {/* Image */}
+        <div
+          className="absolute inset-y-0 right-0 w-[50%] sm:w-[52%]"
+          style={{ clipPath: "url(#hero-curve)" }}
+        >
+          <Image
+            src={imageUrl}
+            alt="Luxury Hotel Hero"
+            fill
+            priority
+            className="object-cover sm:object-fill"
+          />
+        </div>
+
+        {/* Content */}
+        <div className="relative z-10 w-[62%] sm:w-[55%] px-4 sm:px-10 lg:px-14 py-6 sm:py-12 lg:py-16 flex flex-col">
+          <p className="text-[8px] sm:text-xs font-bold tracking-[0.2em] text-green-700 uppercase">
+            {badgeText}
+          </p>
+
+          <h1 className="mt-2 sm:mt-4 text-[26px] leading-[1.1] sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-[#17382f]">
+            {headingText}
+            <span className="block text-green-700">{highlightText}</span>
+          </h1>
+
+          <p className="mt-2 sm:mt-5 text-[10px] sm:text-base text-slate-500 max-w-md leading-relaxed">
+            {subtitleText}
+          </p>
+        </div>
       </div>
 
-      {/* Hero Content */}
-      <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-6 md:py-15 flex flex-col justify-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-300 text-xs font-semibold w-fit mb-6 backdrop-blur-md">
-          <Star size={14} className="fill-teal-400 text-teal-400" />
-          <span>{badgeText}</span>
-        </div>
-
-        <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-white max-w-2xl leading-tight">
-          {headingText} <span className="text-teal-400">{highlightText}</span>
-        </h1>
-
-        <p className="mt-4 text-sm sm:text-base text-slate-300 max-w-xl leading-relaxed">
-          {subtitleText}
-        </p>
-
-        <div className="mt-8 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-          <Link
-            href="/rooms"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl btn-primary text-white text-xs sm:text-sm font-semibold transition-all shadow-lg shadow-teal-600/30 active:scale-[0.98]"
-          >
-            <span>{roomsBtnText}</span>
-            <ArrowRight size={16} />
-          </Link>
-        </div>
-
-        {/* Dynamic Metric Display */}
-        <div className="mt-5 pt-8 border-t border-slate-800/80 grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-lg">
-          <div>
-            <p className="text-2xl font-bold text-white">{totalStaysCount}+</p>
-            <p className="text-xs text-slate-400 mt-0.5">Luxury Stays</p>
+      {/* Bottom: 4 feature columns (same on mobile and desktop) */}
+      <div className="grid grid-cols-4 gap-2 sm:gap-6 px-3 sm:px-10 lg:px-14 py-4 sm:py-7 border-t border-slate-100">
+        {features.map(({ icon: Icon, title, desc }) => (
+          <div key={desc} className="flex flex-col items-start gap-1.5 sm:gap-2.5">
+            <div className="h-7 w-7 sm:h-11 sm:w-11 rounded-full bg-green-100 text-green-700 flex items-center justify-center shrink-0">
+              <Icon size={14} className="sm:hidden" />
+              <Icon size={20} className="hidden sm:block" />
+            </div>
+            <div>
+              <p className="text-[9px] sm:text-sm font-bold text-[#17382f] leading-tight">{title}</p>
+              <p className="mt-0.5 text-[7px] sm:text-xs text-slate-500 leading-snug">{desc}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-2xl font-bold text-white">{averageRatingFormatted}</p>
-            <p className="text-xs text-slate-400 mt-0.5">User Rating</p>
-          </div>
-          <div className="col-span-2 sm:col-span-1 flex items-center gap-2 text-slate-300 text-xs">
-            <ShieldCheck size={20} className="text-teal-400 shrink-0" />
-            <span>{metricBadgeText}</span>
-          </div>
-        </div>
+        ))}
       </div>
     </section>
   );
 }
-
