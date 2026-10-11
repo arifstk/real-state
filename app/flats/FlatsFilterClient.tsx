@@ -261,7 +261,7 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                     type="button"
                     onClick={() => setSelectedBeds(selectedBeds === opt ? "" : opt)}
                     className={`py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${selectedBeds === opt
-                      ? "bg-teal-600 text-white"
+                      ? "bg-green-700 text-white"
                       : "bg-slate-50 text-slate-600 hover:bg-slate-100"
                       }`}
                   >
@@ -276,7 +276,7 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
               <div className="flex justify-between text-xs font-semibold text-slate-600">
                 <span>Max Price</span>
                 {/* <span className="text-teal-600 font-bold">{formatBDT(maxPrice)}</span> */}
-                <span className="text-teal-600 font-bold">${maxPrice.toLocaleString()}</span>
+                <span className="text-green-700 font-bold">${maxPrice.toLocaleString()}</span>
               </div>
               <input
                 type="range"
@@ -286,9 +286,9 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                 value={maxPrice}
                 onChange={(e) => setMaxPriceInput(Number(e.target.value))}
                 style={{
-                  background: `linear-gradient(to right, #0d9488 ${pricePercentage}%, #e2e8f0 ${pricePercentage}%)`,
+                  background: `linear-gradient(to right, #15803d ${pricePercentage}%, #e2e8f0 ${pricePercentage}%)`,
                 }}
-                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-teal-600 [&::-webkit-slider-runnable-track]:rounded-lg [&::-moz-range-track]:rounded-lg"
+                className="w-full h-2 rounded-lg appearance-none cursor-pointer accent-green-700 [&::-webkit-slider-runnable-track]:rounded-lg [&::-moz-range-track]:rounded-lg"
               />
             </div>
 
@@ -303,7 +303,7 @@ export default function FlatsFilterClient({ initialFlats }: FlatsFilterClientPro
                     onChange={(e) => setOnlyAvailable(e.target.checked)}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-teal-600"></div>
+                  <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-700"></div>
                 </div>
               </label>
             </div>

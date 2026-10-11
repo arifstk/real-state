@@ -60,7 +60,7 @@ export default function CookieConsentBanner() {
             onClick={accept}
             className="flex-1 sm:flex-none px-5 py-2 text-xs sm:text-sm font-semibold rounded-xl bg-teal-600 text-white hover:bg-teal-700 shadow-sm active:scale-95 transition cursor-pointer"
           >
-            Accept
+            Accept All
           </button>
         </div>
       </div>

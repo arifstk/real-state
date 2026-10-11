@@ -412,8 +412,8 @@ export default async function Footer() {
           </p>
 
           <p className="flex items-center gap-1.5">
-            <span>Built with</span>
-            <Heart size={14} className="fill-teal-500 text-teal-500" />
+            <span>Developed</span>
+            {/* <Heart size={14} className="fill-teal-500 text-teal-500" /> */}
             <span>by</span>
             <a
               href="https://arif-portfolio-eosin.vercel.app/"
