@@ -29,12 +29,12 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   keywords: [
     SITE_NAME,
-    "Luxury Stays",
-    "Hotel Booking",
-    "Luxury Rooms",
-    "Resort Reservation",
-    "Online Hotel Booking BD",
-    "Best Rates Hotel",
+    "Real Estate",
+    "Property Listings",
+    "Home Buying",
+    "Real Estate Agent",
+    "Property Search",
+    "Investment Opportunities",
   ],
   authors: [{ name: SITE_NAME }],
   robots: {
